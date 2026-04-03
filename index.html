@@ -5,27 +5,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>配方管理系统</title>
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="./styles/main.css">
 </head>
 
 <body>
     <div class="shell">
         <aside class="sidebar">
             <div class="brand-panel">
-                <h1>配方管理系统</h1>
+                <div class="brand-header">
+                    <div class="brand-mark" aria-hidden="true">R</div>
+                    <div class="brand-text">
+                        <h1>配方管理系统</h1>
+                        <p>材料、配方与库存的一体化工作台</p>
+                    </div>
+                </div>
+                <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="收起导航栏"
+                    aria-expanded="true" title="收起导航栏">
+                    <span class="toggle-icon" aria-hidden="true">←</span>
+                </button>
             </div>
 
-            <nav class="sidebar-nav">
+            <nav class="sidebar-nav" aria-label="主导航">
                 <a href="#dashboard-section" class="nav-link active" data-target="dashboard-section">
+                    <span class="nav-icon" aria-hidden="true">◫</span>
                     <span class="nav-label">总览</span>
                 </a>
                 <a href="#inventory-section" class="nav-link" data-target="inventory-section">
+                    <span class="nav-icon" aria-hidden="true">◨</span>
                     <span class="nav-label">库存</span>
                 </a>
                 <a href="#formula-section" class="nav-link" data-target="formula-section">
+                    <span class="nav-icon" aria-hidden="true">◧</span>
                     <span class="nav-label">配方设计</span>
                 </a>
                 <a href="#library-section" class="nav-link" data-target="library-section">
+                    <span class="nav-icon" aria-hidden="true">◎</span>
                     <span class="nav-label">配方库</span>
                 </a>
             </nav>
@@ -56,9 +70,10 @@
 
             <section id="inventory-section" class="section">
                 <div class="section-head">
-                    <h3>原材料库存</h3>
+                    <h3>原材料库</h3>
                     <div class="inline-actions">
-                        <input type="search" id="inventory-search" class="text-input search-input" placeholder="搜索名称、牌号、供应商">
+                        <input type="search" id="inventory-search" class="text-input search-input"
+                            placeholder="搜索名称、牌号、供应商">
                     </div>
                 </div>
 
@@ -119,11 +134,13 @@
                         <div class="form-grid">
                             <label>
                                 <span>配方名称</span>
-                                <input id="formula-name" class="text-input" type="text" placeholder="例如：PBT GF30 阻燃连接器料">
+                                <input id="formula-name" class="text-input" type="text"
+                                    placeholder="例如：PBT GF30 阻燃连接器料">
                             </label>
                             <label>
                                 <span>应用方向</span>
-                                <input id="formula-application" class="text-input" type="text" placeholder="连接器、汽车电器、家电骨架">
+                                <input id="formula-application" class="text-input" type="text"
+                                    placeholder="连接器、汽车电器、家电骨架">
                             </label>
                             <label>
                                 <span>基材体系</span>
@@ -183,7 +200,8 @@
                 <div class="section-head">
                     <h3>配方库</h3>
                     <div class="inline-actions">
-                        <input type="search" id="library-search" class="text-input search-input" placeholder="搜索配方、应用或状态">
+                        <input type="search" id="library-search" class="text-input search-input"
+                            placeholder="搜索配方、应用或状态">
                     </div>
                 </div>
 
@@ -192,7 +210,7 @@
         </main>
     </div>
 
-    <script src="index.js"></script>
+    <script type="module" src="./src/main.js"></script>
 </body>
 
 </html>
