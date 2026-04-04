@@ -1,0 +1,990 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>改性塑料配方管理系统</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<script>
+// Lucide icons (optional enhancement, all icons are inline SVG already)
+(function(){
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js';
+  s.onload = function(){ window.__lucideReady = true; };
+  s.onerror = function(){};
+  document.head.appendChild(s);
+})();
+</script>
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<!-- ========== Login Page ========== -->
+<div class="login-page" id="loginPage">
+  <!-- Animated background -->
+  <div class="login-bg"></div>
+  <div class="login-grid"></div>
+  <div class="login-particles">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="login-content">
+    <!-- Left branding -->
+    <div class="login-brand">
+      <div class="login-brand-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>
+        </div>
+        <div class="logo-text">PlastiFormula</div>
+      </div>
+      <h1>改性塑料<br><span>配方管理平台</span></h1>
+      <p>专为改性塑料企业打造的智能化配方管理系统，集成库存管理、配方研发、订单生产全流程数字化解决方案。</p>
+      <div class="login-features">
+        <div class="login-feature">
+          <div class="feat-icon" style="background:rgba(37,99,235,.15)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/></svg>
+          </div>
+          <h4>智能配方</h4>
+          <p>多材料配比自动计算，成本实时估算</p>
+        </div>
+        <div class="login-feature">
+          <div class="feat-icon" style="background:rgba(16,185,129,.15)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <h4>库存预警</h4>
+          <p>实时监控库存水位，智能补货提醒</p>
+        </div>
+        <div class="login-feature">
+          <div class="feat-icon" style="background:rgba(245,158,11,.15)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <h4>订单追踪</h4>
+          <p>全流程可视化，生产进度一目了然</p>
+        </div>
+        <div class="login-feature">
+          <div class="feat-icon" style="background:rgba(124,58,237,.15)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+          </div>
+          <h4>数据报表</h4>
+          <p>多维度分析，辅助科学决策</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right login card -->
+    <div class="login-card">
+      <div class="login-header">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>
+        <h2>欢迎回来</h2>
+        <p>请登录您的账号以继续</p>
+      </div>
+      <div class="login-body">
+        <div class="login-error" id="loginError">用户名或密码错误</div>
+        <div class="form-group">
+          <label>用户名</label>
+          <input type="text" class="form-control" id="loginUsername" placeholder="请输入用户名" value="admin">
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" class="form-control" id="loginPassword" placeholder="请输入密码" value="admin123" onkeyup="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="btn btn-primary" onclick="doLogin()"><span>登 录</span></button>
+        <div class="login-divider">快速登录</div>
+        <div class="login-accounts">
+          <div class="login-account-btn" onclick="quickLogin('admin','admin123')">
+            <strong>管理员</strong>admin / admin123
+          </div>
+          <div class="login-account-btn" onclick="quickLogin('operator','123456')">
+            <strong>操作员</strong>operator / 123456
+          </div>
+          <div class="login-account-btn" onclick="quickLogin('engineer','123456')">
+            <strong>工程师</strong>engineer / 123456
+          </div>
+          <div class="login-account-btn" onclick="quickLogin('viewer','123456')">
+            <strong>查看者</strong>viewer / 123456
+          </div>
+        </div>
+      </div>
+      <div class="login-footer">
+        PlastiFormula ERP v1.0 · 改性塑料配方管理系统
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>
+    <div>
+      <h1>改性塑料配方系统</h1>
+      <small>PlastiFormula ERP</small>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">概览</div>
+    <div class="nav-item active" data-page="dashboard">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> 仪表盘
+    </div>
+    <div class="nav-section">库存管理</div>
+    <div class="nav-item" data-page="inventory-resin">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg> 基础树脂
+    </div>
+    <div class="nav-item" data-page="inventory-additive">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/></svg> 改性添加剂
+    </div>
+    <div class="nav-item" data-page="inventory-auxiliary">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> 辅料与助剂
+    </div>
+    <div class="nav-section">核心业务</div>
+    <div class="nav-item" data-page="formula">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> 配方管理
+    </div>
+    <div class="nav-item" data-page="order">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> 订单管理
+    </div>
+    <div class="nav-section">基础数据</div>
+    <div class="nav-item" data-page="supplier">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg> 供应商管理
+    </div>
+    <div class="nav-item" data-page="customer">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 客户管理
+    </div>
+    <div class="nav-section">系统管理</div>
+    <div class="nav-item" data-page="personnel">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 人员管理
+    </div>
+    <div class="nav-section">报表</div>
+    <div class="nav-item" data-page="report">
+      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg> 数据报表
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    v1.0.0 · 改性塑料配方管理系统
+  </div>
+</aside>
+
+<!-- Header -->
+<header class="header">
+  <button class="header-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none" id="menuBtn"><svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg></button>
+  <div class="header-title" id="headerTitle">仪表盘</div>
+  <div class="header-search">
+    <span class="header-search-icon"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+    <input type="text" placeholder="搜索配方、材料、订单..." id="globalSearch" onkeyup="handleGlobalSearch(event)">
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" title="通知" onclick="showToast('暂无新通知','warning')"><svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
+    <div class="user-menu">
+      <div class="user-avatar" id="userAvatarBtn" onclick="toggleUserMenu()">A</div>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="user-dropdown-header">
+          <div class="name" id="ddUserName">Admin</div>
+          <div class="role" id="ddUserRole">系统管理员</div>
+        </div>
+        <div class="user-dropdown-item" onclick="navigateTo('profile');closeUserMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          个人中心
+        </div>
+        <div class="user-dropdown-item" onclick="navigateTo('personnel');closeUserMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          人员管理
+        </div>
+        <div class="user-dropdown-divider"></div>
+        <div class="user-dropdown-item danger" onclick="doLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          退出登录
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Main content -->
+<main class="main" id="mainContent">
+
+  <!-- ========== Dashboard ========== -->
+  <div class="page active" id="page-dashboard">
+    <!-- Welcome Banner -->
+    <div class="dash-welcome" id="dashWelcome"></div>
+    <!-- KPI Cards -->
+    <div class="dash-kpi-grid" id="dashKpi"></div>
+    <!-- Row: Donut + Pipeline -->
+    <div class="dash-grid-2">
+      <div class="panel">
+        <div class="panel-header"><h2>库存价值分布</h2></div>
+        <div class="panel-body" id="dashDonut"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>订单生产管线</h2></div>
+        <div class="panel-body" id="dashPipeline"></div>
+      </div>
+    </div>
+    <!-- Row: Top Materials + Formula Cost -->
+    <div class="dash-grid-2">
+      <div class="panel">
+        <div class="panel-header"><h2>库存 Top 8 材料 (按价值)</h2></div>
+        <div class="panel-body" id="dashTopMaterials"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>配方成本排行</h2></div>
+        <div class="panel-body" id="dashFormulaCost"></div>
+      </div>
+    </div>
+    <!-- Row: Recent Orders + Low Stock -->
+    <div class="dash-grid-21">
+      <div class="panel">
+        <div class="panel-header"><h2>近期订单动态</h2></div>
+        <div class="panel-body no-pad">
+          <div class="table-wrap"><table><thead><tr><th>订单号</th><th>客户</th><th>配方</th><th>金额</th><th>状态</th><th>日期</th></tr></thead><tbody id="dashRecentOrders"></tbody></table></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>库存预警</h2></div>
+        <div class="panel-body no-pad">
+          <div class="table-wrap"><table><thead><tr><th>材料</th><th>库存</th><th>状态</th></tr></thead><tbody id="dashLowStock"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Inventory - Resin ========== -->
+  <div class="page" id="page-inventory-resin">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>基础树脂库存</h2>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="exportTableCSV('resinTable')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 导出</button>
+          <button class="btn btn-primary" onclick="openMaterialModal('resin')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增树脂</button>
+        </div>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table id="resinTable">
+            <thead><tr><th>编号</th><th>名称</th><th>型号/牌号</th><th>分类</th><th>供应商</th><th>库存(kg)</th><th>单价(¥/kg)</th><th>安全库存</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="resinTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Inventory - Additive ========== -->
+  <div class="page" id="page-inventory-additive">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/></svg>改性添加剂库存</h2>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="exportTableCSV('additiveTable')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 导出</button>
+          <button class="btn btn-primary" onclick="openMaterialModal('additive')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增添加剂</button>
+        </div>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table id="additiveTable">
+            <thead><tr><th>编号</th><th>名称</th><th>功能分类</th><th>供应商</th><th>库存(kg)</th><th>单价(¥/kg)</th><th>安全库存</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="additiveTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Inventory - Auxiliary ========== -->
+  <div class="page" id="page-inventory-auxiliary">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>辅料与助剂库存</h2>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="exportTableCSV('auxTable')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 导出</button>
+          <button class="btn btn-primary" onclick="openMaterialModal('auxiliary')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增辅料</button>
+        </div>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table id="auxTable">
+            <thead><tr><th>编号</th><th>名称</th><th>类别</th><th>供应商</th><th>库存(kg)</th><th>单价(¥/kg)</th><th>安全库存</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="auxTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Formula List ========== -->
+  <div class="page" id="page-formula">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>配方管理</h2>
+        <div class="btn-group">
+          <div class="filters">
+            <select id="formulaFilterCategory" onchange="renderFormulaList()">
+              <option value="">全部分类</option>
+              <option value="PBT">PBT系列</option>
+              <option value="PET">PET系列</option>
+              <option value="PA">尼龙(PA)系列</option>
+              <option value="PP">PP系列</option>
+              <option value="PC">PC系列</option>
+              <option value="其他">其他</option>
+            </select>
+            <select id="formulaFilterStatus" onchange="renderFormulaList()">
+              <option value="">全部状态</option>
+              <option value="draft">草稿</option>
+              <option value="active">已发布</option>
+              <option value="archived">已归档</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openFormulaEditor()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新建配方</button>
+        </div>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>配方编号</th><th>配方名称</th><th>基础树脂</th><th>分类</th><th>材料数</th><th>成本(¥/kg)</th><th>状态</th><th>创建日期</th><th>操作</th></tr></thead>
+            <tbody id="formulaTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Formula Editor (独立页面) ========== -->
+  <div class="page" id="page-formula-edit">
+    <!-- 顶部操作栏 -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button class="btn btn-outline" onclick="backToFormulaList()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> 返回列表</button>
+      <h2 id="formulaEditTitle" style="font-size:18px;font-weight:600">新建配方</h2>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="saveFormula('draft')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 保存草稿</button>
+        <button class="btn btn-primary" onclick="saveFormula('active')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 保存并发布</button>
+      </div>
+    </div>
+
+    <!-- 基本信息 -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-header"><h2><svg class="icon-sm" style="display:inline;vertical-align:-2px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg>基本信息</h2></div>
+      <div class="panel-body">
+        <input type="hidden" id="formulaEditId">
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>配方名称 *</label>
+            <input type="text" class="form-control" id="formulaName" placeholder="如：PBT-GF30 阻燃增强">
+          </div>
+          <div class="form-group">
+            <label>配方编号</label>
+            <input type="text" class="form-control" id="formulaCode" placeholder="自动生成" readonly>
+          </div>
+          <div class="form-group">
+            <label>基础树脂分类 *</label>
+            <select class="form-control" id="formulaCategory">
+              <option value="PBT">PBT系列</option>
+              <option value="PET">PET系列</option>
+              <option value="PA">尼龙(PA)系列</option>
+              <option value="PP">PP系列</option>
+              <option value="PC">PC系列</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>配方描述</label>
+          <textarea class="form-control" id="formulaDesc" rows="2" placeholder="配方用途、特性说明、适用场景等"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 配方组成 + 侧边汇总 -->
+    <div class="formula-editor">
+      <!-- 左侧：材料列表 -->
+      <div>
+        <div class="panel" style="margin-bottom:0">
+          <div class="panel-header">
+            <h2><svg class="icon-sm" style="display:inline;vertical-align:-2px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v7.5"/><path d="M5 6h14"/><path d="M5 6v4a7 7 0 0 0 3.5 1"/><path d="M19 6v4a7 7 0 0 1-3.5 1"/><path d="M8.5 21h7"/><path d="M5 21h2"/><path d="M17 21h2"/></svg>配方组成</h2>
+            <button class="btn btn-sm btn-primary" onclick="addFormulaLine()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 添加材料行</button>
+          </div>
+          <div class="panel-body no-pad">
+            <div class="formula-line-header">
+              <div>材料名称</div>
+              <div>配比 (%)</div>
+              <div>成本 (¥/kg)</div>
+              <div>库存状态</div>
+              <div></div>
+            </div>
+            <div id="formulaLines"></div>
+            <div class="formula-line-add">
+              <button class="btn btn-sm btn-outline" onclick="addFormulaLine()" style="width:100%;justify-content:center;border-style:dashed"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 添加另一种材料</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：实时汇总 -->
+      <div class="formula-side-panel">
+        <div class="summary-card">
+          <div class="summary-card-header"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>配方汇总</div>
+          <div class="summary-card-body">
+            <div class="summary-row">
+              <span class="label">材料种类</span>
+              <span class="value" id="sumMatCount">0</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">总配比</span>
+              <span class="value"><span id="sumTotalPct">0</span>%</span>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray-400);margin-bottom:2px">
+                <span>配比进度</span>
+                <span id="sumPctLabel">0/100%</span>
+              </div>
+              <div class="pct-bar"><div class="pct-bar-fill pct-ok" id="sumPctBar" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="summary-total">
+            <div style="font-size:12px;color:var(--gray-500);margin-bottom:4px">预估成本</div>
+            <div><span class="big-num" id="sumTotalCost">0.00</span><span class="unit">¥/kg</span></div>
+          </div>
+          <div class="summary-alert" id="sumAlerts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Order ========== -->
+  <div class="page" id="page-order">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>订单管理</h2>
+        <div class="btn-group">
+          <div class="filters">
+            <select id="orderFilterStatus" onchange="renderOrderList()">
+              <option value="">全部状态</option>
+              <option value="pending">待生产</option>
+              <option value="producing">生产中</option>
+              <option value="completed">已完成</option>
+              <option value="shipped">已发货</option>
+              <option value="cancelled">已取消</option>
+            </select>
+            <input type="date" id="orderFilterDate" onchange="renderOrderList()">
+          </div>
+          <button class="btn btn-primary" onclick="openOrderModal()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新建订单</button>
+        </div>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>订单号</th><th>客户</th><th>配方</th><th>数量(kg)</th><th>单价(¥/kg)</th><th>总金额(¥)</th><th>状态</th><th>交货日期</th><th>操作</th></tr></thead>
+            <tbody id="orderTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Supplier ========== -->
+  <div class="page" id="page-supplier">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg>供应商管理</h2>
+        <button class="btn btn-primary" onclick="openSupplierModal()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增供应商</button>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>编号</th><th>供应商名称</th><th>联系人</th><th>电话</th><th>邮箱</th><th>供应类别</th><th>评级</th><th>操作</th></tr></thead>
+            <tbody id="supplierTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Customer ========== -->
+  <div class="page" id="page-customer">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>客户管理</h2>
+        <button class="btn btn-primary" onclick="openCustomerModal()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增客户</button>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>编号</th><th>客户名称</th><th>联系人</th><th>电话</th><th>行业</th><th>累计订单</th><th>操作</th></tr></thead>
+            <tbody id="customerTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Report ========== -->
+  <div class="page" id="page-report">
+    <div class="tabs" id="reportTabs">
+      <div class="tab active" data-tab="inv-report">库存报表</div>
+      <div class="tab" data-tab="formula-report">配方统计</div>
+      <div class="tab" data-tab="order-report">订单统计</div>
+    </div>
+    <div id="report-inv-report" class="report-tab">
+      <div class="stat-cards" id="reportInvStats"></div>
+      <div class="panel">
+        <div class="panel-header"><h2>各类材料库存价值</h2></div>
+        <div class="panel-body" id="reportInvChart"></div>
+      </div>
+    </div>
+    <div id="report-formula-report" class="report-tab" style="display:none">
+      <div class="stat-cards" id="reportFormulaStats"></div>
+      <div class="panel">
+        <div class="panel-header"><h2>配方使用频率 Top 10</h2></div>
+        <div class="panel-body no-pad">
+          <div class="table-wrap"><table><thead><tr><th>排名</th><th>配方名称</th><th>使用次数</th><th>平均成本</th></tr></thead><tbody id="reportFormulaTop"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+    <div id="report-order-report" class="report-tab" style="display:none">
+      <div class="stat-cards" id="reportOrderStats"></div>
+      <div class="panel">
+        <div class="panel-header"><h2>近6月订单趋势</h2></div>
+        <div class="panel-body" id="reportOrderChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Profile ========== -->
+  <div class="page" id="page-profile">
+    <div class="profile-grid">
+      <div>
+        <div class="profile-card">
+          <div class="profile-avatar-lg" id="profileAvatar">A</div>
+          <div class="profile-name" id="profileName">Admin</div>
+          <div class="profile-role" id="profileRole">系统管理员</div>
+          <div class="profile-stats">
+            <div class="profile-stat"><div class="num" id="profileFormulas">0</div><div class="label">创建配方</div></div>
+            <div class="profile-stat"><div class="num" id="profileOrders">0</div><div class="label">处理订单</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <h2>个人信息</h2>
+            <button class="btn btn-primary btn-sm" onclick="saveProfile()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 保存</button>
+          </div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group"><label>用户名</label><input type="text" class="form-control" id="profileUsername" readonly></div>
+              <div class="form-group"><label>姓名</label><input type="text" class="form-control" id="profileRealName"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>手机号</label><input type="text" class="form-control" id="profilePhone"></div>
+              <div class="form-group"><label>邮箱</label><input type="email" class="form-control" id="profileEmail"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>部门</label><input type="text" class="form-control" id="profileDept" readonly></div>
+              <div class="form-group"><label>角色</label><input type="text" class="form-control" id="profileRoleInput" readonly></div>
+            </div>
+            <hr style="margin:20px 0;border-color:var(--gray-200)">
+            <h4 style="margin-bottom:12px">修改密码</h4>
+            <div class="form-row-3">
+              <div class="form-group"><label>当前密码</label><input type="password" class="form-control" id="profileOldPwd" placeholder="不修改留空"></div>
+              <div class="form-group"><label>新密码</label><input type="password" class="form-control" id="profileNewPwd" placeholder="至少6位"></div>
+              <div class="form-group"><label>确认密码</label><input type="password" class="form-control" id="profileConfirmPwd"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>最近操作记录</h2></div>
+          <div class="panel-body" id="profileActivity"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Personnel Management ========== -->
+  <div class="page" id="page-personnel">
+    <div class="panel">
+      <div class="panel-header">
+        <h2><svg class="icon-sm" style="display:inline;vertical-align:-2px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>人员管理</h2>
+        <div class="btn-group">
+          <div class="filters">
+            <select id="personnelFilterRole" onchange="renderPersonnelList()">
+              <option value="">全部角色</option>
+              <option value="admin">管理员</option>
+              <option value="engineer">配方工程师</option>
+              <option value="operator">操作员</option>
+              <option value="viewer">查看者</option>
+            </select>
+            <select id="personnelFilterStatus" onchange="renderPersonnelList()">
+              <option value="">全部状态</option>
+              <option value="active">在职</option>
+              <option value="disabled">已禁用</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openPersonnelModal()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 新增人员</button>
+        </div>
+      </div>
+      <div class="panel-body no-pad">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>部门</th><th>手机号</th><th>最后登录</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="personnelTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ========== MODALS ========== -->
+
+<!-- Material Modal -->
+<div class="modal-overlay" id="materialModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="materialModalTitle">新增材料</h3>
+      <button class="modal-close" onclick="closeModal('materialModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="matEditId">
+      <input type="hidden" id="matCategory">
+      <div class="form-row">
+        <div class="form-group">
+          <label>材料名称 *</label>
+          <input type="text" class="form-control" id="matName" placeholder="如：PBT 1100">
+        </div>
+        <div class="form-group">
+          <label>型号/牌号</label>
+          <input type="text" class="form-control" id="matGrade" placeholder="如：1100-63A">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label id="matSubLabel">子分类</label>
+          <select class="form-control" id="matSubCategory"></select>
+        </div>
+        <div class="form-group">
+          <label>供应商</label>
+          <select class="form-control" id="matSupplier"></select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>当前库存 (kg) *</label>
+          <input type="number" class="form-control" id="matStock" step="0.1" min="0">
+        </div>
+        <div class="form-group">
+          <label>单价 (¥/kg) *</label>
+          <input type="number" class="form-control" id="matPrice" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>安全库存 (kg)</label>
+          <input type="number" class="form-control" id="matSafetyStock" step="0.1" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>规格说明</label>
+        <textarea class="form-control" id="matSpec" rows="2" placeholder="如：玻纤增强30%，阻燃V0"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('materialModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveMaterial()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="orderModalTitle">新建订单</h3>
+      <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="orderEditId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>客户 *</label>
+          <select class="form-control" id="orderCustomer"></select>
+        </div>
+        <div class="form-group">
+          <label>配方 *</label>
+          <select class="form-control" id="orderFormula" onchange="onOrderFormulaChange()"></select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>数量 (kg) *</label>
+          <input type="number" class="form-control" id="orderQty" step="1" min="1" oninput="calcOrderTotal()">
+        </div>
+        <div class="form-group">
+          <label>单价 (¥/kg) *</label>
+          <input type="number" class="form-control" id="orderPrice" step="0.01" min="0" oninput="calcOrderTotal()">
+        </div>
+        <div class="form-group">
+          <label>总金额 (¥)</label>
+          <input type="text" class="form-control" id="orderTotal" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>交货日期 *</label>
+          <input type="date" class="form-control" id="orderDeliveryDate">
+        </div>
+        <div class="form-group">
+          <label>状态</label>
+          <select class="form-control" id="orderStatus">
+            <option value="pending">待生产</option>
+            <option value="producing">生产中</option>
+            <option value="completed">已完成</option>
+            <option value="shipped">已发货</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea class="form-control" id="orderRemark" rows="2"></textarea>
+      </div>
+      <div id="orderMaterialCheck" class="formula-summary" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('orderModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveOrder()">保存订单</button>
+    </div>
+  </div>
+</div>
+
+<!-- Supplier Modal -->
+<div class="modal-overlay" id="supplierModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="supplierModalTitle">新增供应商</h3>
+      <button class="modal-close" onclick="closeModal('supplierModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="supplierEditId">
+      <div class="form-group">
+        <label>供应商名称 *</label>
+        <input type="text" class="form-control" id="supplierName">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>联系人</label>
+          <input type="text" class="form-control" id="supplierContact">
+        </div>
+        <div class="form-group">
+          <label>电话</label>
+          <input type="text" class="form-control" id="supplierPhone">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" class="form-control" id="supplierEmail">
+        </div>
+        <div class="form-group">
+          <label>供应类别</label>
+          <select class="form-control" id="supplierType">
+            <option value="resin">基础树脂</option>
+            <option value="additive">改性添加剂</option>
+            <option value="auxiliary">辅料助剂</option>
+            <option value="mixed">综合</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>评级</label>
+        <select class="form-control" id="supplierRating">
+          <option value="5">⭐⭐⭐⭐⭐ 优秀</option>
+          <option value="4">⭐⭐⭐⭐ 良好</option>
+          <option value="3" selected>⭐⭐⭐ 一般</option>
+          <option value="2">⭐⭐ 较差</option>
+          <option value="1">⭐ 差</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>地址</label>
+        <textarea class="form-control" id="supplierAddress" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('supplierModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Modal -->
+<div class="modal-overlay" id="customerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="customerModalTitle">新增客户</h3>
+      <button class="modal-close" onclick="closeModal('customerModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="customerEditId">
+      <div class="form-group">
+        <label>客户名称 *</label>
+        <input type="text" class="form-control" id="customerName">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>联系人</label>
+          <input type="text" class="form-control" id="customerContact">
+        </div>
+        <div class="form-group">
+          <label>电话</label>
+          <input type="text" class="form-control" id="customerPhone">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" class="form-control" id="customerEmail">
+        </div>
+        <div class="form-group">
+          <label>行业</label>
+          <select class="form-control" id="customerIndustry">
+            <option value="汽车">汽车零部件</option>
+            <option value="电子">电子电器</option>
+            <option value="家电">家用电器</option>
+            <option value="工业">工业设备</option>
+            <option value="消费">消费产品</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>地址</label>
+        <textarea class="form-control" id="customerAddress" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('customerModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveCustomer()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Personnel Modal -->
+<div class="modal-overlay" id="personnelModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="personnelModalTitle">新增人员</h3>
+      <button class="modal-close" onclick="closeModal('personnelModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="personnelEditId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>用户名 *</label>
+          <input type="text" class="form-control" id="perUsername" placeholder="登录用户名">
+        </div>
+        <div class="form-group">
+          <label>姓名 *</label>
+          <input type="text" class="form-control" id="perRealName">
+        </div>
+      </div>
+      <div class="form-row" id="perPwdRow">
+        <div class="form-group">
+          <label>密码 *</label>
+          <input type="password" class="form-control" id="perPassword" placeholder="至少6位">
+        </div>
+        <div class="form-group">
+          <label>确认密码 *</label>
+          <input type="password" class="form-control" id="perPasswordConfirm">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>角色 *</label>
+          <select class="form-control" id="perRole">
+            <option value="admin">管理员 — 全部权限</option>
+            <option value="engineer">配方工程师 — 配方+库存</option>
+            <option value="operator">操作员 — 库存+订单</option>
+            <option value="viewer">查看者 — 只读</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>部门</label>
+          <select class="form-control" id="perDept">
+            <option value="研发部">研发部</option>
+            <option value="生产部">生产部</option>
+            <option value="品质部">品质部</option>
+            <option value="销售部">销售部</option>
+            <option value="管理部">管理部</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>手机号</label>
+          <input type="text" class="form-control" id="perPhone">
+        </div>
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" class="form-control" id="perEmail">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>状态</label>
+        <select class="form-control" id="perStatus">
+          <option value="active">在职</option>
+          <option value="disabled">已禁用</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('personnelModal')">取消</button>
+      <button class="btn btn-primary" onclick="savePersonnel()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stock In/Out Modal -->
+<div class="modal-overlay" id="stockModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h3 id="stockModalTitle">入库</h3>
+      <button class="modal-close" onclick="closeModal('stockModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="stockMatId">
+      <input type="hidden" id="stockType">
+      <div class="form-group">
+        <label>材料</label>
+        <input type="text" class="form-control" id="stockMatName" readonly>
+      </div>
+      <div class="form-group">
+        <label>当前库存 (kg)</label>
+        <input type="text" class="form-control" id="stockCurrent" readonly>
+      </div>
+      <div class="form-group">
+        <label id="stockQtyLabel">数量 (kg) *</label>
+        <input type="number" class="form-control" id="stockQty" step="0.1" min="0.1">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('stockModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveStock()">确认</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/core/data.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/core/navigation.js"></script>
+<script src="assets/js/modules/dashboard.js"></script>
+<script src="assets/js/modules/inventory.js"></script>
+<script src="assets/js/modules/formula.js"></script>
+<script src="assets/js/modules/order.js"></script>
+<script src="assets/js/modules/party.js"></script>
+<script src="assets/js/modules/report.js"></script>
+<script src="assets/js/modules/search.js"></script>
+<script src="assets/js/modules/user.js"></script>
+<script src="assets/js/app-init.js"></script>
+</body>
+</html>
+
