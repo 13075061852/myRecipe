@@ -1,45 +1,125 @@
 ﻿// ===== Inventory =====
+function populateInventoryCategoryFilters() {
+  const byCategory = {
+    resin: new Set(),
+    additive: new Set(),
+    auxiliary: new Set(),
+  };
+  (db.materials || []).forEach(m => {
+    if (!m || !byCategory[m.category]) return;
+    if (m.subCategory) byCategory[m.category].add(m.subCategory);
+  });
+
+  const fill = function(selectId, values) {
+    const el = document.getElementById(selectId);
+    if (!el) return;
+    const prev = el.value;
+    const options = ['<option value="">全部分类</option>']
+      .concat(Array.from(values).sort((a, b) => String(a).localeCompare(String(b), 'zh-CN')).map(v => `<option value="${v}">${v}</option>`));
+    el.innerHTML = options.join('');
+    if (prev && values.has(prev)) el.value = prev;
+  };
+
+  fill('resinCategoryFilter', byCategory.resin);
+  fill('additiveCategoryFilter', byCategory.additive);
+  fill('salesCategoryFilter', byCategory.auxiliary);
+}
 function renderInventory(cat) {
-  const items = db.materials.filter(m => m.category === cat);
+  populateInventoryCategoryFilters();
+  let items = db.materials.filter(m => m.category === cat);
+  if (cat === 'resin') {
+    const resinFilterEl = document.getElementById('resinCategoryFilter');
+    const resinFilter = resinFilterEl ? resinFilterEl.value : '';
+    if (resinFilter) items = items.filter(m => (m.subCategory || '') === resinFilter);
+  }
+  if (cat === 'additive') {
+    const additiveFilterEl = document.getElementById('additiveCategoryFilter');
+    const additiveFilter = additiveFilterEl ? additiveFilterEl.value : '';
+    if (additiveFilter) items = items.filter(m => (m.subCategory || '') === additiveFilter);
+  }
+  if (cat === 'auxiliary') {
+    const sourceFilterEl = document.getElementById('salesInventoryFilter');
+    const sourceFilter = sourceFilterEl ? sourceFilterEl.value : '';
+    if (sourceFilter) items = items.filter(m => (m.sourceType || 'agency') === sourceFilter);
+    const salesCatFilterEl = document.getElementById('salesCategoryFilter');
+    const salesCatFilter = salesCatFilterEl ? salesCatFilterEl.value : '';
+    if (salesCatFilter) items = items.filter(m => (m.subCategory || '') === salesCatFilter);
+  }
   const tbodyId = cat === 'resin' ? 'resinTableBody' : cat === 'additive' ? 'additiveTableBody' : 'auxTableBody';
   const tbody = document.getElementById(tbodyId);
+  const colCount = cat === 'resin' ? 10 : (cat === 'auxiliary' ? 11 : 9);
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty"><div class="empty-icon">${ICO.emptyBox}</div><p>暂无数据，点击"新增"添加材料</p></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${colCount}" class="empty"><div class="empty-icon">${ICO.emptyBox}</div><p>暂无数据，点击"新增"添加材料</p></td></tr>`;
     return;
   }
   tbody.innerHTML = items.map(m => {
     const sup = db.suppliers.find(s => s.id === m.supplierId);
     const isLow = m.stock <= m.safetyStock;
+    const sourceLabel = (m.sourceType || 'agency') === 'self_produced'
+      ? '<span class="badge badge-green">自产营销</span>'
+      : '<span class="badge badge-blue">外部代理</span>';
+    const actions = `
+      <div class="btn-group">
+        <button class="btn btn-sm btn-outline" onclick="openStockModal('${m.id}','in')" title="入库">${ICO.download}</button>
+        <button class="btn btn-sm btn-outline" onclick="openStockModal('${m.id}','out')" title="出库">${ICO.upload}</button>
+        <button class="btn btn-sm btn-outline" onclick="editMaterial('${m.id}')" title="编辑">${ICO.edit}</button>
+        <button class="btn btn-sm btn-outline" onclick="deleteMaterial('${m.id}')" title="删除" style="color:var(--danger)">${ICO.trash}</button>
+      </div>
+    `;
+
+    if (cat === 'resin') {
+      return `<tr>
+        <td>${m.id}</td>
+        <td><strong>${m.name}</strong></td>
+        <td>${m.grade||'-'}</td>
+        <td>${m.subCategory||'-'}</td>
+        <td>${sup?sup.name:'-'}</td>
+        <td class="${isLow?'low-stock':''}" style="${isLow?'color:var(--danger);font-weight:600':''}">${m.stock.toLocaleString()}</td>
+        <td>¥${m.price.toFixed(2)}</td>
+        <td>${m.safetyStock}</td>
+        <td>${isLow ? '<span class="badge badge-red">库存不足</span>' : '<span class="badge badge-green">正常</span>'}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }
+
+    if (cat === 'additive') {
+      return `<tr>
+        <td>${m.id}</td>
+        <td><strong>${m.name}</strong></td>
+        <td>${m.subCategory||'-'}</td>
+        <td>${sup?sup.name:'-'}</td>
+        <td class="${isLow?'low-stock':''}" style="${isLow?'color:var(--danger);font-weight:600':''}">${m.stock.toLocaleString()}</td>
+        <td>¥${m.price.toFixed(2)}</td>
+        <td>${m.safetyStock}</td>
+        <td>${isLow ? '<span class="badge badge-red">库存不足</span>' : '<span class="badge badge-green">正常</span>'}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }
+
     return `<tr>
       <td>${m.id}</td>
-      <td><strong>${m.name}</strong>${m.spec ? '<br><small style="color:var(--gray-400)">'+m.spec+'</small>' : ''}</td>
-      <td>${m.grade||'-'}</td>
+      <td><strong>${m.name}</strong></td>
+      <td>${sourceLabel}</td>
+      <td>${m.batchNo || '-'}</td>
       <td>${m.subCategory||'-'}</td>
       <td>${sup?sup.name:'-'}</td>
       <td class="${isLow?'low-stock':''}" style="${isLow?'color:var(--danger);font-weight:600':''}">${m.stock.toLocaleString()}</td>
       <td>¥${m.price.toFixed(2)}</td>
       <td>${m.safetyStock}</td>
       <td>${isLow ? '<span class="badge badge-red">库存不足</span>' : '<span class="badge badge-green">正常</span>'}</td>
-      <td>
-        <div class="btn-group">
-          <button class="btn btn-sm btn-outline" onclick="openStockModal('${m.id}','in')" title="入库">${ICO.download}</button>
-          <button class="btn btn-sm btn-outline" onclick="openStockModal('${m.id}','out')" title="出库">${ICO.upload}</button>
-          <button class="btn btn-sm btn-outline" onclick="editMaterial('${m.id}')" title="编辑">${ICO.edit}</button>
-          <button class="btn btn-sm btn-outline" onclick="deleteMaterial('${m.id}')" title="删除" style="color:var(--danger)">${ICO.trash}</button>
-        </div>
-      </td>
+      <td>${actions}</td>
     </tr>`;
   }).join('');
 }
 
 function categoryLabel(cat, sub) {
-  const labels = { resin:'基础树脂', additive:'添加剂', auxiliary:'辅料助剂' };
+  const labels = { resin:'基础树脂', additive:'添加剂', auxiliary:'销售成品' };
   return (labels[cat]||cat) + (sub ? ' · ' + sub : '');
 }
 
 const RESIN_SUBS = ['PBT','PET','PA','PP','PC','ABS','POM','PPO','其他'];
 const ADDITIVE_SUBS = ['增强纤维','阻燃剂','抗氧剂','增韧剂','相容剂','着色剂','成核剂','功能助剂','其他'];
-const AUX_SUBS = ['偶联剂','润滑剂','分散剂','稳定剂','抗UV剂','脱模剂','其他'];
+const AUX_SUBS = ['注塑件','结构件','外壳件','电子件','汽车件','家电件','其他'];
 
 function openMaterialModal(cat, editId) {
   document.getElementById('matCategory').value = cat;
@@ -47,7 +127,9 @@ function openMaterialModal(cat, editId) {
   const subs = cat === 'resin' ? RESIN_SUBS : cat === 'additive' ? ADDITIVE_SUBS : AUX_SUBS;
   const subSel = document.getElementById('matSubCategory');
   subSel.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
-  document.getElementById('matSubLabel').textContent = cat === 'resin' ? '树脂类型' : cat === 'additive' ? '功能分类' : '辅料类别';
+  document.getElementById('matSubLabel').textContent = cat === 'resin' ? '树脂类型' : cat === 'additive' ? '功能分类' : '产品类别';
+  const batchRow = document.getElementById('matBatchRow');
+  if (batchRow) batchRow.style.display = cat === 'auxiliary' ? 'grid' : 'none';
   const supSel = document.getElementById('matSupplier');
   supSel.innerHTML = '<option value="">-- 选择供应商 --</option>' + db.suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
   if (editId) {
@@ -61,11 +143,16 @@ function openMaterialModal(cat, editId) {
       document.getElementById('matPrice').value = m.price;
       document.getElementById('matSafetyStock').value = m.safetyStock;
       document.getElementById('matSpec').value = m.spec || '';
+      const batchInput = document.getElementById('matBatchNo');
+      if (batchInput) batchInput.value = m.batchNo || '';
       document.getElementById('materialModalTitle').textContent = '编辑材料';
     }
   } else {
-    ['matName','matGrade','matStock','matPrice','matSafetyStock','matSpec'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('materialModalTitle').textContent = cat === 'resin' ? '新增树脂' : cat === 'additive' ? '新增添加剂' : '新增辅料';
+    ['matName','matGrade','matStock','matPrice','matSafetyStock','matSpec','matBatchNo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('materialModalTitle').textContent = cat === 'resin' ? '新增树脂' : cat === 'additive' ? '新增添加剂' : '新增成品';
   }
   openModal('materialModal');
 }
@@ -86,12 +173,18 @@ function saveMaterial() {
     stock, price, safetyStock: parseFloat(document.getElementById('matSafetyStock').value) || 0,
     spec: document.getElementById('matSpec').value.trim(),
   };
+  if (data.category === 'auxiliary') {
+    const existingAux = editId ? db.materials.find(x => x.id === editId) : null;
+    data.sourceType = existingAux ? (existingAux.sourceType || 'agency') : 'agency';
+    const batchInput = document.getElementById('matBatchNo');
+    data.batchNo = (batchInput && batchInput.value ? batchInput.value.trim() : '') || ('LOT-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + String(db.materials.filter(m => m.category === 'auxiliary').length + 1).padStart(3, '0'));
+  }
   if (editId) {
     const idx = db.materials.findIndex(x => x.id === editId);
     if (idx >= 0) db.materials[idx] = { ...db.materials[idx], ...data };
     showToast('材料已更新');
   } else {
-    data.id = genId(data.category === 'resin' ? 'R' : data.category === 'additive' ? 'A' : 'X');
+    data.id = genId(data.category === 'resin' ? 'R' : data.category === 'additive' ? 'A' : 'P');
     data.createdAt = new Date().toISOString().slice(0,10);
     db.materials.push(data);
     showToast('材料已添加');
@@ -134,3 +227,5 @@ function saveStock() {
   showToast(`${m.name} ${type === 'in' ? '入库' : '出库'} ${qty} kg`);
   refreshCurrentPage();
 }
+
+

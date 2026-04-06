@@ -1,5 +1,7 @@
 ﻿// ===== Data Layer =====
-const STORAGE_KEY = 'plastiformula_db';
+const STORAGE_KEY = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.storage && APP_CONFIG.storage.dbKey)
+  ? APP_CONFIG.storage.dbKey
+  : 'plastiformula_db';
 const DEFAULT_DATA = {
   materials: [
     { id:'R001', name:'PBT 1100', grade:'1100-63A', category:'resin', subCategory:'PBT', supplierId:'S001', stock:5000, price:18.5, safetyStock:1000, spec:'基础注塑级PBT', createdAt:'2026-01-10' },
@@ -80,15 +82,41 @@ const DEFAULT_DATA = {
     { id:'C003', name:'泰科电子', contact:'周工', phone:'021-61234567', email:'zhou@te.com', industry:'电子', address:'上海市浦东新区' },
     { id:'C004', name:'美的集团', contact:'马经理', phone:'0757-26331234', email:'ma@midea.com', industry:'家电', address:'广东省佛山市' },
   ],
+  productionPlans: [
+    { id:'PP-20260404-001', planDate:'2026-04-04', orderId:'ORD-20260315', formulaId:'F001', qty:3000, status:'planned', remark:'A班优先生产', createdAt:'2026-04-04' }
+  ],
 };
 
 
 // ===== DB Helpers =====
-function loadDB() {
-  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch(e) {}
-  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+function normalizeDB(raw) {
+  const merged = { ...JSON.parse(JSON.stringify(DEFAULT_DATA)), ...(raw || {}) };
+  merged.materials = (merged.materials || []).map(m => {
+    if (m.category === 'auxiliary') {
+      const next = { ...m };
+      if (!next.sourceType) next.sourceType = 'agency';
+      if (!next.batchNo) {
+        const d = (next.createdAt || new Date().toISOString().slice(0,10)).replace(/-/g, '');
+        next.batchNo = 'LOT-' + d + '-' + String(Math.floor(Math.random() * 900) + 100);
+      }
+      return next;
+    }
+    return m;
+  });
+  if (!Array.isArray(merged.productionPlans)) merged.productionPlans = [];
+  return merged;
 }
-function saveDB(db) { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+
+function loadDB() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return normalizeDB(JSON.parse(raw)); } catch(e) {}
+  return normalizeDB(DEFAULT_DATA);
+}
+function saveDB(nextDb) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextDb));
+  if (typeof appEvents !== 'undefined' && APP_EVENTS) {
+    appEvents.emit(APP_EVENTS.DB_UPDATED, { ts: Date.now() });
+  }
+}
 let db = loadDB();
 
 // SVG icon helper for JS template strings

@@ -13,7 +13,7 @@ function renderReport() {
     if (!catStats[m.category]) catStats[m.category] = { count:0, stock:0, value:0 };
     catStats[m.category].count++; catStats[m.category].stock += m.stock; catStats[m.category].value += m.stock * m.price;
   });
-  const catNames = { resin:'基础树脂', additive:'改性添加剂', auxiliary:'辅料助剂' };
+  const catNames = { resin:'基础树脂', additive:'改性添加剂', auxiliary:'销售库存' };
   document.getElementById('reportInvStats').innerHTML = Object.entries(catStats).map(([k,v]) => `
     <div class="stat-card"><div class="stat-icon" style="background:var(--primary-light)">${ICO.package}</div><div class="stat-info"><h3>¥${(v.value/10000).toFixed(1)}万</h3><p>${catNames[k]||k} (${v.count}种)</p></div></div>
   `).join('');
@@ -30,7 +30,7 @@ function renderReport() {
   document.getElementById('reportFormulaStats').innerHTML = `
     <div class="stat-card"><div class="stat-icon" style="background:var(--success-light)">${ICO.clipboard}</div><div class="stat-info"><h3>${db.formulas.length}</h3><p>配方总数</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:var(--primary-light)">${ICO.check}</div><div class="stat-info"><h3>${activeF}</h3><p>已发布配方</p></div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:var(--warning-light)">${ICO.repeat}</div><div class="stat-info"><h3>${totalUsage}</h3><p>总使用次数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--warning-light)">${ICO.repeat}</div><div class="stat-info"><h3>${totalUsage}</h3><p>总生产次数</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:var(--primary-light)">${ICO.dollar}</div><div class="stat-info"><h3>¥${avgCost.toFixed(2)}</h3><p>平均成本/kg</p></div></div>
   `;
   const top = [...db.formulas].sort((a,b)=>(b.usageCount||0)-(a.usageCount||0)).slice(0,10);

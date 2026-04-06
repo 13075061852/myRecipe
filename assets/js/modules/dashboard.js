@@ -101,7 +101,7 @@ function renderDashboard() {
   const cats = {
     resin: { name: '基础树脂', color: '#2563eb', items: 0, value: 0 },
     additive: { name: '改性添加剂', color: '#059669', items: 0, value: 0 },
-    auxiliary: { name: '辅料助剂', color: '#d97706', items: 0, value: 0 }
+    auxiliary: { name: '销售库存', color: '#d97706', items: 0, value: 0 }
   };
   db.materials.forEach(m => { if (cats[m.category]) { cats[m.category].items++; cats[m.category].value += m.stock * m.price; }});
   const totalCatValue = Object.values(cats).reduce((s, c) => s + c.value, 0) || 1;

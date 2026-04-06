@@ -39,6 +39,51 @@ function orderStatusBadge(s) {
 }
 function statusBadge(s) { return orderStatusBadge(s); }
 
+function ensureRawMaterialDeducted(order, formula) {
+  if (!order || !formula || order.rawDeductedAt) return;
+  formula.lines.forEach(l => {
+    const m = db.materials.find(x => x.id === l.matId);
+    if (m) m.stock = Math.max(0, m.stock - order.qty * l.pct / 100);
+  });
+  order.rawDeductedAt = new Date().toISOString();
+}
+
+function upsertFinishedGoodsFromOrder(order, formula) {
+  if (!order || !formula || order.finishedGoodsInAt) return null;
+  const ts = new Date();
+  const day = ts.toISOString().slice(0,10).replace(/-/g, '');
+  const batchNo = 'BATCH-' + day + '-' + String(Math.floor(Math.random() * 900) + 100);
+  const existing = db.materials.find(m => m.category === 'auxiliary' && m.productOfFormulaId === formula.id);
+  if (existing) {
+    existing.stock += order.qty;
+    existing.price = order.price;
+    existing.updatedAt = new Date().toISOString().slice(0,10);
+    existing.sourceType = 'self_produced';
+    existing.batchNo = batchNo;
+    order.finishedGoodsInAt = new Date().toISOString();
+    return existing;
+  }
+  const item = {
+    id: genId('P'),
+    name: formula.name,
+    grade: formula.code || formula.id,
+    category: 'auxiliary',
+    subCategory: '注塑件',
+    supplierId: '',
+    stock: order.qty,
+    price: order.price,
+    safetyStock: 0,
+    spec: '成品库存（订单完工自动入库）',
+    createdAt: new Date().toISOString().slice(0,10),
+    productOfFormulaId: formula.id,
+    sourceType: 'self_produced',
+    batchNo,
+  };
+  db.materials.push(item);
+  order.finishedGoodsInAt = new Date().toISOString();
+  return item;
+}
+
 function openOrderModal(editId) {
   document.getElementById('orderEditId').value = editId || '';
   document.getElementById('orderCustomer').innerHTML = db.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
@@ -114,6 +159,12 @@ function saveOrder() {
     db.orders.push(data);
     const f = db.formulas.find(x => x.id === formulaId);
     if (f) f.usageCount = (f.usageCount || 0) + 1;
+    if (data.status === 'producing' || data.status === 'completed' || data.status === 'shipped') {
+      ensureRawMaterialDeducted(data, f);
+    }
+    if (data.status === 'completed' || data.status === 'shipped') {
+      upsertFinishedGoodsFromOrder(data, f);
+    }
     showToast('订单已创建');
   }
   saveDB(db); closeModal('orderModal'); renderOrderList();
@@ -125,10 +176,9 @@ function advanceOrder(id) {
   const flow = { pending:'producing', producing:'completed', completed:'shipped' };
   const next = flow[o.status];
   if (next) {
-    if (o.status === 'producing') {
-      const f = db.formulas.find(x => x.id === o.formulaId);
-      if (f) f.lines.forEach(l => { const m = db.materials.find(x => x.id === l.matId); if (m) m.stock = Math.max(0, m.stock - o.qty * l.pct / 100); });
-    }
+    const f = db.formulas.find(x => x.id === o.formulaId);
+    if (o.status === 'pending') ensureRawMaterialDeducted(o, f);
+    if (o.status === 'producing' && next === 'completed') upsertFinishedGoodsFromOrder(o, f);
     o.status = next; saveDB(db);
     showToast(`订单 ${o.id} → ${orderStatusBadge(next).replace(/<[^>]+>/g,'')}`);
     renderOrderList();

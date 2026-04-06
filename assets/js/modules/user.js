@@ -9,10 +9,18 @@ const DEFAULT_USERS = [
 ];
 
 function loadUsers() {
-  try { const raw = localStorage.getItem('plastiformula_users'); if (raw) return JSON.parse(raw); } catch(e) {}
+  const usersKey = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.storage && APP_CONFIG.storage.usersKey)
+    ? APP_CONFIG.storage.usersKey
+    : 'plastiformula_users';
+  try { const raw = localStorage.getItem(usersKey); if (raw) return JSON.parse(raw); } catch(e) {}
   return JSON.parse(JSON.stringify(DEFAULT_USERS));
 }
-function saveUsers(users) { localStorage.setItem('plastiformula_users', JSON.stringify(users)); }
+function saveUsers(users) {
+  const usersKey = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.storage && APP_CONFIG.storage.usersKey)
+    ? APP_CONFIG.storage.usersKey
+    : 'plastiformula_users';
+  localStorage.setItem(usersKey, JSON.stringify(users));
+}
 let users = loadUsers();
 let currentUser = null;
 
@@ -32,6 +40,9 @@ function doLogin() {
   refreshCurrentPage();
   if(window.lucide) lucide.createIcons();
   showToast('欢迎回来，' + user.realName);
+  if (typeof appEvents !== 'undefined' && APP_EVENTS) {
+    appEvents.emit(APP_EVENTS.USER_LOGIN, { username: user.username, role: user.role });
+  }
 }
 
 function quickLogin(u, p) {
@@ -42,11 +53,15 @@ function quickLogin(u, p) {
 }
 
 function doLogout() {
+  const prev = currentUser;
   currentUser = null;
   closeUserMenu();
   document.getElementById('loginPage').classList.remove('hidden');
   document.getElementById('loginPassword').value = '';
   document.getElementById('loginError').style.display = 'none';
+  if (typeof appEvents !== 'undefined' && APP_EVENTS) {
+    appEvents.emit(APP_EVENTS.USER_LOGOUT, { username: prev ? prev.username : null });
+  }
 }
 
 function updateUserUI() {
@@ -253,27 +268,3 @@ function deletePersonnel(username) {
   showToast('用户已删除');
   renderPersonnelList();
 }
-
-
-// ===== Navigation (override to add new pages) =====
-const pageTitles_orig = pageTitles;
-Object.assign(pageTitles, { 'profile':'个人中心', 'personnel':'人员管理' });
-
-const _origRefresh = refreshCurrentPage;
-refreshCurrentPage = function() {
-  switch(currentPage) {
-    case 'dashboard': renderDashboard(); break;
-    case 'inventory-resin': renderInventory('resin'); break;
-    case 'inventory-additive': renderInventory('additive'); break;
-    case 'inventory-auxiliary': renderInventory('auxiliary'); break;
-    case 'formula': renderFormulaList(); break;
-    case 'formula-edit': break;
-    case 'order': renderOrderList(); break;
-    case 'supplier': renderSupplierList(); break;
-    case 'customer': renderCustomerList(); break;
-    case 'report': renderReport(); break;
-    case 'profile': renderProfile(); break;
-    case 'personnel': renderPersonnelList(); break;
-  }
-  if(window.lucide) lucide.createIcons();
-};

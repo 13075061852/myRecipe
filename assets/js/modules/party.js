@@ -1,7 +1,7 @@
 ﻿// ===== Supplier =====
 function renderSupplierList() {
   const tbody = document.getElementById('supplierTableBody');
-  const typeLabels = { resin:'基础树脂', additive:'改性添加剂', auxiliary:'辅料助剂', mixed:'综合' };
+  const typeLabels = { resin:'基础树脂', additive:'改性添加剂', auxiliary:'销售成品', mixed:'综合' };
   tbody.innerHTML = db.suppliers.map(s => `<tr>
     <td>${s.id}</td><td><strong>${s.name}</strong></td><td>${s.contact||'-'}</td><td>${s.phone||'-'}</td>
     <td>${s.email||'-'}</td><td><span class="badge badge-blue">${typeLabels[s.type]||s.type}</span></td>

@@ -1,42 +1,59 @@
-﻿// ===== Navigation =====
+// ===== Navigation =====
 let currentPage = 'dashboard';
-const pageTitles = {
-  'dashboard':'仪表盘', 'inventory-resin':'基础树脂', 'inventory-additive':'改性添加剂',
-  'inventory-auxiliary':'辅料与助剂', 'formula':'配方管理', 'formula-edit':'配方编辑',
-  'order':'订单管理', 'supplier':'供应商管理', 'customer':'客户管理', 'report':'数据报表'
-};
+const pageTitles = {};
+const pageRegistry = {};
+
+function registerPage(page, options) {
+  const cfg = options || {};
+  pageRegistry[page] = {
+    title: cfg.title || page,
+    render: typeof cfg.render === 'function' ? cfg.render : null,
+  };
+  pageTitles[page] = pageRegistry[page].title;
+}
+
+function registerPages(items) {
+  (items || []).forEach(item => registerPage(item.page, item));
+}
+
+function getRegisteredPage(page) {
+  return pageRegistry[page] || null;
+}
 
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => navigateTo(item.dataset.page));
 });
 
 function navigateTo(page) {
+  const pageEl = document.getElementById('page-' + page);
+  if (!pageEl) {
+    showToast('页面不存在: ' + page, 'warning');
+    return;
+  }
+
   currentPage = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
+  pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
   const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
   if (navEl) navEl.classList.add('active');
-  // For formula-edit, keep formula nav highlighted
   if (page === 'formula-edit') {
-    document.querySelector('.nav-item[data-page="formula"]').classList.add('active');
+    const formulaNav = document.querySelector('.nav-item[data-page="formula"]');
+    if (formulaNav) formulaNav.classList.add('active');
   }
+
   document.getElementById('headerTitle').textContent = pageTitles[page] || page;
   refreshCurrentPage();
+
+  if (typeof appEvents !== 'undefined' && APP_EVENTS) {
+    appEvents.emit(APP_EVENTS.PAGE_CHANGED, { page: currentPage });
+  }
 }
 
 function refreshCurrentPage() {
-  switch(currentPage) {
-    case 'dashboard': renderDashboard(); break;
-    case 'inventory-resin': renderInventory('resin'); break;
-    case 'inventory-additive': renderInventory('additive'); break;
-    case 'inventory-auxiliary': renderInventory('auxiliary'); break;
-    case 'formula': renderFormulaList(); break;
-    case 'formula-edit': /* already rendered */ break;
-    case 'order': renderOrderList(); break;
-    case 'supplier': renderSupplierList(); break;
-    case 'customer': renderCustomerList(); break;
-    case 'report': renderReport(); break;
-  }
-  if(window.lucide)lucide.createIcons();
+  const cfg = getRegisteredPage(currentPage);
+  if (cfg && cfg.render) cfg.render();
+  if (window.lucide) lucide.createIcons();
 }
+
