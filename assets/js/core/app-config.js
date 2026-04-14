@@ -5,6 +5,7 @@ const APP_CONFIG = Object.freeze({
   storage: Object.freeze({
     dbKey: 'plastiformula_db',
     usersKey: 'plastiformula_users',
+    authKey: 'plastiformula_auth',
     datasourceKey: 'plastiformula_datasource',
   }),
 });

@@ -24,6 +24,56 @@ function saveUsers(users) {
 let users = loadUsers();
 let currentUser = null;
 
+function getAuthKey() {
+  return (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.storage && APP_CONFIG.storage.authKey)
+    ? APP_CONFIG.storage.authKey
+    : 'plastiformula_auth';
+}
+
+function saveAuth(username) {
+  try {
+    if (username) {
+      localStorage.setItem(getAuthKey(), username);
+    } else {
+      localStorage.removeItem(getAuthKey());
+    }
+  } catch (e) {}
+}
+
+function restoreSession() {
+  let username = null;
+  try {
+    username = localStorage.getItem(getAuthKey());
+  } catch (e) {}
+  if (!username) return null;
+
+  const user = users.find(u => u.username === username);
+  if (!user || user.status === 'disabled') {
+    saveAuth(null);
+    return null;
+  }
+
+  currentUser = user;
+  return currentUser;
+}
+
+function syncAuthState() {
+  const loginPage = document.getElementById('loginPage');
+  if (loginPage) {
+    loginPage.classList.toggle('hidden', !!currentUser);
+  }
+  document.documentElement.classList.toggle('authenticated', !!currentUser);
+}
+
+function applyAuthenticatedState() {
+  syncAuthState();
+  if (currentUser) {
+    updateUserUI();
+    refreshCurrentPage();
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
 function doLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -35,10 +85,8 @@ function doLogin() {
   currentUser = user;
   user.lastLogin = new Date().toISOString().slice(0,16).replace('T',' ');
   saveUsers(users);
-  document.getElementById('loginPage').classList.add('hidden');
-  updateUserUI();
-  refreshCurrentPage();
-  if(window.lucide) lucide.createIcons();
+  saveAuth(user.username);
+  applyAuthenticatedState();
   showToast('欢迎回来，' + user.realName);
   if (typeof appEvents !== 'undefined' && APP_EVENTS) {
     appEvents.emit(APP_EVENTS.USER_LOGIN, { username: user.username, role: user.role });
@@ -55,8 +103,9 @@ function quickLogin(u, p) {
 function doLogout() {
   const prev = currentUser;
   currentUser = null;
+  saveAuth(null);
   closeUserMenu();
-  document.getElementById('loginPage').classList.remove('hidden');
+  syncAuthState();
   document.getElementById('loginPassword').value = '';
   document.getElementById('loginError').style.display = 'none';
   if (typeof appEvents !== 'undefined' && APP_EVENTS) {
@@ -238,6 +287,7 @@ function savePersonnel() {
       // If editing current user, update currentUser too
       if (currentUser && currentUser.username === editId) {
         currentUser = { ...currentUser, ...data };
+        saveAuth(currentUser.username);
         updateUserUI();
       }
     }
@@ -265,6 +315,7 @@ function deletePersonnel(username) {
   if (!confirm(`确定删除用户 "${u.realName}(${u.username})" ？`)) return;
   users = users.filter(x => x.username !== username);
   saveUsers(users);
+  if (currentUser && currentUser.username === username) saveAuth(null);
   showToast('用户已删除');
   renderPersonnelList();
 }

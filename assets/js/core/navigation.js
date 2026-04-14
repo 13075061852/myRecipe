@@ -54,6 +54,7 @@ function navigateTo(page) {
 function refreshCurrentPage() {
   const cfg = getRegisteredPage(currentPage);
   if (cfg && cfg.render) cfg.render();
+  if (typeof window.refreshCustomSelects === 'function') window.refreshCustomSelects(document);
   if (window.lucide) lucide.createIcons();
 }
 

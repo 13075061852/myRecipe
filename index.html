@@ -5,6 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>改性塑料配方管理系统</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<style>
+  html { visibility: hidden; }
+  html.auth-ready { visibility: visible; }
+</style>
+<script>
+  (function () {
+    var AUTH_KEY = 'plastiformula_auth';
+    var USERS_KEY = 'plastiformula_users';
+    try {
+      var username = localStorage.getItem(AUTH_KEY);
+      if (username) {
+        var rawUsers = localStorage.getItem(USERS_KEY);
+        if (rawUsers) {
+          var users = JSON.parse(rawUsers);
+          var user = Array.isArray(users) && users.find(function (u) {
+            return u && u.username === username && u.status !== 'disabled';
+          });
+          if (user) {
+            document.documentElement.classList.add('authenticated');
+          } else {
+            localStorage.removeItem(AUTH_KEY);
+          }
+        } else {
+          localStorage.removeItem(AUTH_KEY);
+        }
+      }
+    } catch (e) {
+      localStorage.removeItem(AUTH_KEY);
+    }
+    document.documentElement.classList.add('auth-ready');
+  })();
+</script>
 <script>
 // Lucide icons (optional enhancement, all icons are inline SVG already)
 (function(){
@@ -453,95 +485,126 @@
   <!-- ========== Formula Editor (独立页面) ========== -->
   <div class="page" id="page-formula-edit">
     <!-- 顶部操作栏 -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <div class="formula-edit-toolbar">
       <button class="btn btn-outline" onclick="backToFormulaList()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> 返回列表</button>
-      <h2 id="formulaEditTitle" style="font-size:18px;font-weight:600">新建配方</h2>
-      <div style="margin-left:auto;display:flex;gap:8px">
+      <div class="formula-edit-tabs formula-edit-tabs-inline" id="formulaEditTabs">
+        <button class="formula-edit-tab active" data-tab="composition" onclick="switchFormulaEditTab('composition')">配方组成</button>
+        <button class="formula-edit-tab" data-tab="details" onclick="switchFormulaEditTab('details')">配方详情</button>
+      </div>
+      <div class="formula-edit-toolbar-actions">
         <button class="btn btn-outline" onclick="saveFormula('experiment')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 保存为实验</button>
         <button class="btn btn-primary" onclick="saveFormula('normal')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 保存为正常</button>
       </div>
     </div>
 
-    <!-- 基本信息 + 配方汇总（紧凑合并） -->
-    <div class="panel formula-compact-panel formula-main-panel">
-      <div class="panel-header"><h2><svg class="icon-sm" style="display:inline;vertical-align:-2px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg>基本信息与配方汇总</h2></div>
-      <div class="panel-body formula-compact-top">
-        <input type="hidden" id="formulaEditId">
-        <div class="formula-compact-left">
-          <div class="form-row-3">
-            <div class="form-group">
-              <label>配方名称 *</label>
-              <input type="text" class="form-control" id="formulaName" placeholder="如：PBT-GF30 阻燃增强">
+    <div class="formula-edit-tab-panel" id="formulaEditPanelDetails" data-tab="details">
+      <!-- 基本信息 + 配方汇总（紧凑合并） -->
+      <div class="panel formula-compact-panel formula-main-panel">
+        <div class="panel-header"><h2><svg class="icon-sm" style="display:inline;vertical-align:-2px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg>基本信息与配方汇总</h2></div>
+        <div class="panel-body formula-compact-top formula-overview-layout">
+          <input type="hidden" id="formulaEditId">
+          <div class="formula-compact-left formula-overview-form">
+            <div class="formula-overview-grid">
+              <div class="form-group">
+                <label>配方名称 *</label>
+                <input type="text" class="form-control" id="formulaName" placeholder="如：PBT-GF30 阻燃增强">
+              </div>
+              <div class="form-group">
+                <label>配方编号</label>
+                <input type="text" class="form-control" id="formulaCode" placeholder="自动生成" readonly>
+              </div>
+              <div class="form-group">
+                <label>配方状态</label>
+                <input type="text" class="form-control" value="由顶部按钮决定（实验 / 正常）" readonly>
+              </div>
             </div>
-            <div class="form-group">
-              <label>配方编号</label>
-              <input type="text" class="form-control" id="formulaCode" placeholder="自动生成" readonly>
-            </div>
-            <div class="form-group">
-              <label>基础树脂分类 *</label>
-              <select class="form-control" id="formulaCategory">
-                <option value="PBT">PBT系列</option>
-                <option value="PET">PET系列</option>
-                <option value="PA">尼龙(PA)系列</option>
-                <option value="PP">PP系列</option>
-                <option value="PC">PC系列</option>
-                <option value="其他">其他</option>
-              </select>
+            <div class="formula-overview-meta-row">
+              <div class="form-group">
+                <label>自动识别主树脂</label>
+                <input type="text" class="form-control" id="formulaPrimaryResin" placeholder="从配方组成自动识别" readonly>
+              </div>
+              <div class="form-group">
+                <label>基准批量(kg)</label>
+                <input type="number" class="form-control" id="formulaBaseBatchKg" min="1" step="1" value="1000" oninput="updateFormulaSummary()">
+              </div>
             </div>
           </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label>配方描述</label>
-            <textarea class="form-control" id="formulaDesc" rows="1" placeholder="配方用途、特性说明、适用场景等"></textarea>
+          <div class="formula-compact-right formula-overview-summary">
+            <div class="formula-overview-summary-head">
+              <strong>配方汇总</strong>
+              <span>实时计算</span>
+            </div>
+            <div class="formula-mini-grid">
+              <div class="formula-mini-item"><span>材料种类</span><strong id="sumMatCount">0</strong></div>
+              <div class="formula-mini-item"><span>总配比</span><strong><span id="sumTotalPct">0</span>%</strong></div>
+              <div class="formula-mini-item"><span>基础树脂占比</span><strong><span id="sumResinPct">0</span>%</strong></div>
+              <div class="formula-mini-item"><span>发布状态</span><strong id="sumPublishState">待完善</strong></div>
+              <div class="formula-mini-item"><span>批次成本</span><strong><span id="sumTotalCost">0.00</span> 元/批</strong></div>
+              <div class="formula-mini-item"><span>配比进度</span><strong id="sumPctLabel">0/100%</strong></div>
+            </div>
+            <div class="formula-overview-progress">
+              <div class="pct-bar"><div class="pct-bar-fill pct-ok" id="sumPctBar" style="width:0%"></div></div>
+            </div>
+            <div class="summary-alert" id="sumAlerts"></div>
           </div>
-        </div>
-        <div class="formula-compact-right">
-          <div class="formula-mini-grid">
-            <div class="formula-mini-item"><span>材料种类</span><strong id="sumMatCount">0</strong></div>
-            <div class="formula-mini-item"><span>总配比</span><strong><span id="sumTotalPct">0</span>%</strong></div>
-            <div class="formula-mini-item"><span>基础树脂占比</span><strong><span id="sumResinPct">0</span>%</strong></div>
-            <div class="formula-mini-item"><span>发布状态</span><strong id="sumPublishState">待完善</strong></div>
-            <div class="formula-mini-item"><span>预估成本</span><strong><span id="sumTotalCost">0.00</span> 元/吨</strong></div>
-            <div class="formula-mini-item"><span>配比进度</span><strong id="sumPctLabel">0/100%</strong></div>
-          </div>
-          <div class="pct-bar"><div class="pct-bar-fill pct-ok" id="sumPctBar" style="width:0%"></div></div>
-          <div class="summary-alert" id="sumAlerts"></div>
         </div>
       </div>
     </div>
 
     <!-- 配方组成 -->
+    <div class="formula-edit-tab-panel active formula-edit-panel-composition" id="formulaEditPanelComposition" data-tab="composition">
     <div class="formula-editor">
       <div>
         <div class="panel formula-main-panel" style="margin-bottom:0">
           <div class="panel-header">
             <h2><svg class="icon-sm" style="display:inline;vertical-align:-2px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v7.5"/><path d="M5 6h14"/><path d="M5 6v4a7 7 0 0 0 3.5 1"/><path d="M19 6v4a7 7 0 0 1-3.5 1"/><path d="M8.5 21h7"/><path d="M5 21h2"/><path d="M17 21h2"/></svg>配方组成</h2>
-            <div class="btn-group">
-              <button class="btn btn-sm btn-outline" onclick="autoBalanceFormula()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg> 自动配平100%</button>
-              <button class="btn btn-sm btn-outline" onclick="cleanEmptyFormulaLines()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> 清理空行</button>
-            </div>
           </div>
           <div class="panel-body no-pad">
             <div class="formula-compose-layout">
               <div class="formula-compose-left">
+                <div class="formula-compose-col-head">
+                  <strong>材料池</strong>
+                  <div class="formula-pool-head-tools">
+                    <select id="formulaMaterialCategoryFilter" class="form-control" onchange="renderFormulaMaterialPool()">
+                      <option value="">全部类别</option>
+                      <option value="resin">基础树脂</option>
+                      <option value="additive">改性添加剂</option>
+                      <option value="auxiliary">销售库存</option>
+                    </select>
+                  </div>
+                </div>
                 <div class="formula-material-tools">
                   <input type="text" id="formulaMaterialSearch" class="form-control" placeholder="搜索材料名称/型号" oninput="renderFormulaMaterialPool()">
-                  <select id="formulaMaterialCategoryFilter" class="form-control" onchange="renderFormulaMaterialPool()">
-                    <option value="">全部类别</option>
-                    <option value="resin">基础树脂</option>
-                    <option value="additive">改性添加剂</option>
-                    <option value="auxiliary">销售库存</option>
-                  </select>
                 </div>
                 <div id="formulaMaterialPool" class="formula-material-pool"></div>
               </div>
               <div class="formula-compose-right">
-                <div class="formula-line-header">
-                  <div>材料名称</div>
-                  <div>配比 (%)</div>
-                  <div>每吨用量 (kg)</div>
-                  <div>成本 (元/吨)</div>
-                  <div>库存状态</div>
-                  <div></div>
+                <div class="formula-compose-col-head">
+                  <strong>已选材料</strong>
+                  <div class="formula-selected-head-actions">
+                    <button type="button" class="formula-head-btn" onclick="autoBalanceFormula()">
+                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
+                      自动配平
+                    </button>
+                    <button type="button" class="formula-head-btn formula-head-btn-danger" onclick="cleanEmptyFormulaLines()">
+                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                      清理空行
+                    </button>
+                  </div>
+                </div>
+                <div id="formulaLinesEmpty" class="formula-lines-empty">
+                  <div>
+                    <div class="empty-icon-wrap">
+                      <div class="empty-icon">🧪</div>
+                    </div>
+                    <p>配方中还没有材料</p>
+                    <small>从左侧材料池点击任意材料，即可自动加入右侧配方清单</small>
+                    <div class="formula-empty-tips">
+                      <span>支持搜索材料名称/型号</span>
+                      <span>支持按类别快速筛选</span>
+                      <span>调整配比后自动计算成本与库存</span>
+                    </div>
+                  </div>
                 </div>
                 <div id="formulaLines"></div>
               </div>
@@ -550,6 +613,7 @@
         </div>
       </div>
 
+    </div>
     </div>
   </div>
 
@@ -1281,6 +1345,7 @@
 <script src="assets/js/core/utils.js"></script>
 <script src="assets/js/core/ui.js"></script>
 <script src="assets/js/core/navigation.js"></script>
+<script src="assets/js/core/custom-select.js"></script>
 <script src="assets/js/modules/dashboard.js"></script>
 <script src="assets/js/modules/inventory.js"></script>
 <script src="assets/js/modules/formula.js"></script>
@@ -1295,4 +1360,3 @@
 <script src="assets/js/app-init.js"></script>
 </body>
 </html>
-
