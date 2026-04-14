@@ -31,6 +31,11 @@ function navigateTo(page) {
     return;
   }
 
+  if (window.innerWidth <= 768) {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.classList.remove('open');
+  }
+
   currentPage = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   pageEl.classList.add('active');
@@ -57,4 +62,3 @@ function refreshCurrentPage() {
   if (typeof window.refreshCustomSelects === 'function') window.refreshCustomSelects(document);
   if (window.lucide) lucide.createIcons();
 }
-
