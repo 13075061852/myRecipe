@@ -27,7 +27,16 @@ function bootstrapPageRegistry() {
 
 function bootstrapApp() {
   bootstrapPageRegistry();
+  if (typeof restoreSession === 'function') {
+    restoreSession();
+  }
+  if (typeof syncAuthState === 'function') {
+    syncAuthState();
+  }
   refreshCurrentPage();
+  if (typeof updateUserUI === 'function' && currentUser) {
+    updateUserUI();
+  }
   if (window.lucide) lucide.createIcons();
   if (typeof appEvents !== 'undefined' && APP_EVENTS) {
     appEvents.emit(APP_EVENTS.APP_READY, {

@@ -108,7 +108,7 @@ function buildMigrationBundle() {
   const usersSnapshot = getUsersSnapshot();
   return {
     meta: {
-      app: APP_CONFIG && APP_CONFIG.appName ? APP_CONFIG.appName : 'PlastiFormula',
+      app: APP_CONFIG && APP_CONFIG.appName ? APP_CONFIG.appName : '改性塑料配方管理系统',
       version: APP_CONFIG && APP_CONFIG.version ? APP_CONFIG.version : '1.0.0',
       exportedAt: new Date().toISOString(),
       source: 'localStorage',
@@ -170,7 +170,7 @@ function buildSupabaseSqlTemplate(config) {
   const cfg = mergeDataSourceConfig(config || loadDataSourceConfig());
   const t = cfg.supabase.tables;
   return [
-    '-- PlastiFormula Supabase 初始化 SQL 模板',
+    '-- 改性塑料配方管理系统 Supabase 初始化 SQL 模板',
     '-- 按实际业务可继续扩展字段和索引',
     '',
     `create table if not exists ${t.materials} (`,

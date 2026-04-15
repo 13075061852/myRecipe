@@ -1,10 +1,11 @@
 // ===== App Config =====
 const APP_CONFIG = Object.freeze({
-  appName: 'PlastiFormula',
+  appName: '改性塑料配方管理系统',
   version: '1.0.0',
   storage: Object.freeze({
     dbKey: 'plastiformula_db',
     usersKey: 'plastiformula_users',
+    authKey: 'plastiformula_auth',
     datasourceKey: 'plastiformula_datasource',
   }),
 });

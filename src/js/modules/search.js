@@ -29,6 +29,7 @@ function updateResponsiveUI() {
 
   if (window.innerWidth <= 768) {
     menuBtn.style.display = 'inline-flex';
+    sidebar.classList.remove('open');
   } else {
     menuBtn.style.display = 'none';
     sidebar.classList.remove('open');

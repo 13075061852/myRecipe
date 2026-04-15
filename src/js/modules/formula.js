@@ -1,5 +1,6 @@
 ﻿// ===== Formula List =====
 function renderFormulaList() {
+  syncFormulaCategoryFilterOptions();
   const catFilter = document.getElementById('formulaFilterCategory').value;
   const statusFilter = document.getElementById('formulaFilterStatus').value;
   let formulas = [...db.formulas];
@@ -38,6 +39,19 @@ function renderFormulaList() {
   }).join('');
 }
 
+function syncFormulaCategoryFilterOptions() {
+  const select = document.getElementById('formulaFilterCategory');
+  if (!select) return;
+  const current = select.value || '';
+  const categories = Array.from(new Set(
+    (db.formulas || [])
+      .map(f => (f.category || '').trim())
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+  select.innerHTML = '<option value="">全部分类</option>' + categories.map(cat => `<option value="${cat}">${cat}系列</option>`).join('');
+  if (current && categories.includes(current)) select.value = current;
+}
+
 function getBaseResin(f) {
   const main = f.lines.find(l => { const m = db.materials.find(x => x.id === l.matId); return m && m.category === 'resin'; });
   if (main) { const m = db.materials.find(x => x.id === main.matId); return m ? m.name : '-'; }
@@ -63,6 +77,61 @@ function formulaStatusBadge(s) {
   return `<span class="badge ${cls}">${text}</span>`;
 }
 
+function inferFormulaCategoryFromLines(lines) {
+  const firstResinLine = (lines || []).find(l => {
+    const m = db.materials.find(x => x.id === l.matId);
+    return m && m.category === 'resin';
+  });
+  if (!firstResinLine) return '其他';
+  const resin = db.materials.find(x => x.id === firstResinLine.matId);
+  return resin && resin.subCategory ? resin.subCategory : '其他';
+}
+
+function updateFormulaEditHeaderTitle(isEditMode, formulaName) {
+  const header = document.getElementById('headerTitle');
+  if (!header) return;
+  const modeText = isEditMode ? '配方编辑' : '新建配方';
+  const name = (formulaName || '').trim();
+  header.textContent = name ? `${modeText} · ${name}` : `${modeText} · 未命名`;
+}
+
+let formulaLeaveBypass = false;
+
+function hasFormulaDraftContent() {
+  const name = (document.getElementById('formulaName')?.value || '').trim();
+  const rows = getFormulaEditorRows();
+  const hasLinePct = rows.some(r => (parseFloat(r.pctInp?.value || '0') || 0) > 0);
+  const hasAnyLine = rows.length > 0;
+  const baseBatch = Math.max(1, parseFloat(document.getElementById('formulaBaseBatchKg')?.value || '1000') || 1000);
+  return Boolean(name || hasAnyLine || hasLinePct || baseBatch !== 1000);
+}
+
+function ensureFormulaLeaveModal() {
+  let overlay = document.getElementById('formulaLeaveConfirmOverlay');
+  if (overlay) return overlay;
+  overlay = document.createElement('div');
+  overlay.id = 'formulaLeaveConfirmOverlay';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="width:520px">
+      <div class="modal-header">
+        <h3>离开配方编辑</h3>
+        <button class="modal-close" onclick="closeModal('formulaLeaveConfirmOverlay')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--gray-700)">当前内容尚未处理，是否保存后返回列表？</p>
+      </div>
+      <div class="modal-footer" style="justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModal('formulaLeaveConfirmOverlay')">继续编辑</button>
+        <button class="btn btn-outline" style="color:var(--danger)" onclick="discardFormulaDraftAndBack()">清空并返回</button>
+        <button class="btn btn-primary" onclick="saveFormulaAndBack()">保存并返回</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
 function deleteFormula(id) {
   const f = db.formulas.find(x => x.id === id);
   if (!f) return;
@@ -76,34 +145,90 @@ function deleteFormula(id) {
 // ===== Formula Editor =====
 function openFormulaEditor(editId) {
   document.getElementById('formulaEditId').value = editId || '';
+  const nameEl = document.getElementById('formulaName');
 
   if (editId) {
     const f = db.formulas.find(x => x.id === editId);
     if (!f) return;
-    document.getElementById('formulaEditTitle').textContent = '编辑配方 — ' + f.name;
     document.getElementById('formulaName').value = f.name;
     document.getElementById('formulaCode').value = f.code || f.id;
-    document.getElementById('formulaCategory').value = f.category;
-    document.getElementById('formulaDesc').value = f.desc || '';
+    const baseBatchEl = document.getElementById('formulaBaseBatchKg');
+    if (baseBatchEl) baseBatchEl.value = f.baseBatchKg || 1000;
     document.getElementById('formulaLines').innerHTML = '';
     f.lines.forEach(l => addFormulaLine(l.matId, l.pct));
+    updateFormulaEditHeaderTitle(true, f.name);
   } else {
-    document.getElementById('formulaEditTitle').textContent = '新建配方';
     document.getElementById('formulaName').value = '';
     document.getElementById('formulaCode').value = 'F-' + Date.now().toString(36).toUpperCase().slice(-6);
-    document.getElementById('formulaCategory').value = 'PBT';
-    document.getElementById('formulaDesc').value = '';
+    const baseBatchEl = document.getElementById('formulaBaseBatchKg');
+    if (baseBatchEl) baseBatchEl.value = 1000;
     document.getElementById('formulaLines').innerHTML = '';
+    updateFormulaEditHeaderTitle(false, '');
+  }
+  if (nameEl) {
+    nameEl.oninput = function() {
+      const isEditMode = !!document.getElementById('formulaEditId').value;
+      updateFormulaEditHeaderTitle(isEditMode, nameEl.value);
+    };
   }
   const searchEl = document.getElementById('formulaMaterialSearch');
   const catEl = document.getElementById('formulaMaterialCategoryFilter');
   if (searchEl) searchEl.value = '';
   if (catEl) catEl.value = '';
   updateFormulaSummary();
+  switchFormulaEditTab('composition');
   navigateTo('formula-edit');
 }
 
-function backToFormulaList() { navigateTo('formula'); }
+function backToFormulaList() {
+  if (formulaLeaveBypass) {
+    formulaLeaveBypass = false;
+    navigateTo('formula');
+    return;
+  }
+  if (!hasFormulaDraftContent()) {
+    navigateTo('formula');
+    return;
+  }
+  ensureFormulaLeaveModal();
+  openModal('formulaLeaveConfirmOverlay');
+}
+
+function discardFormulaDraftAndBack() {
+  document.getElementById('formulaEditId').value = '';
+  const nameEl = document.getElementById('formulaName');
+  const codeEl = document.getElementById('formulaCode');
+  const baseBatchEl = document.getElementById('formulaBaseBatchKg');
+  const linesEl = document.getElementById('formulaLines');
+  if (nameEl) nameEl.value = '';
+  if (codeEl) codeEl.value = '';
+  if (baseBatchEl) baseBatchEl.value = 1000;
+  if (linesEl) linesEl.innerHTML = '';
+  closeModal('formulaLeaveConfirmOverlay');
+  formulaLeaveBypass = true;
+  backToFormulaList();
+}
+
+function saveFormulaAndBack() {
+  closeModal('formulaLeaveConfirmOverlay');
+  const editId = document.getElementById('formulaEditId')?.value;
+  if (editId) {
+    const old = db.formulas.find(x => x.id === editId);
+    saveFormula(old && old.status ? old.status : 'experiment');
+    return;
+  }
+  saveFormula('experiment');
+}
+
+function switchFormulaEditTab(tab) {
+  const target = tab === 'details' ? 'details' : 'composition';
+  document.querySelectorAll('#formulaEditTabs .formula-edit-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === target);
+  });
+  document.querySelectorAll('#page-formula-edit .formula-edit-tab-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.tab === target);
+  });
+}
 
 function getFormulaEditorRows() {
   return Array.from(document.querySelectorAll('#formulaLines .formula-line')).map(row => {
@@ -134,6 +259,8 @@ function renderFormulaMaterialPool() {
       (m.subCategory || '').toLowerCase().includes(q)
     );
   }
+  const poolCountEl = document.getElementById('formulaPoolCount');
+  if (poolCountEl) poolCountEl.textContent = String(mats.length);
 
   if (!mats.length) {
     pool.innerHTML = `<div class="empty" style="padding:18px 12px"><p>没有可添加的材料</p></div>`;
@@ -164,8 +291,10 @@ function addMaterialToFormula(matId) {
 
 function buildFormulaMetrics() {
   const rows = getFormulaEditorRows();
+  const baseBatchKg = Math.max(1, parseFloat(document.getElementById('formulaBaseBatchKg')?.value || '1000') || 1000);
   const metrics = {
     rows,
+    baseBatchKg,
     totalPct: 0,
     totalCost: 0,
     resinPct: 0,
@@ -186,10 +315,11 @@ function buildFormulaMetrics() {
     const isDup = r.matId && idCount[r.matId] > 1;
 
     if (r.mat) {
-      if (r.tonInp) r.tonInp.value = (r.pct * 10).toFixed(1);
-      const lineCostPerTon = r.mat.price * r.pct * 10;
-      r.costInp.value = '¥' + lineCostPerTon.toFixed(2);
-      metrics.totalCost += lineCostPerTon;
+      const lineKg = baseBatchKg * r.pct / 100;
+      if (r.tonInp) r.tonInp.value = lineKg.toFixed(1);
+      const lineCost = r.mat.price * lineKg;
+      r.costInp.value = '¥' + lineCost.toFixed(2);
+      metrics.totalCost += lineCost;
       metrics.totalPct += r.pct;
       metrics.selectedCount++;
       if (r.mat.category === 'resin') metrics.resinPct += r.pct;
@@ -318,6 +448,15 @@ function updateFormulaSummary() {
 
   const alertDiv = document.getElementById('sumAlerts');
   alertDiv.innerHTML = metrics.alerts.map(a => `<div class="alert-item">${ICO.warn} ${a}</div>`).join('');
+  const primaryResinEl = document.getElementById('formulaPrimaryResin');
+  if (primaryResinEl) {
+    const resinRows = metrics.rows.filter(r => r.mat && r.mat.category === 'resin');
+    if (!resinRows.length) primaryResinEl.value = '';
+    else {
+      const primary = [...resinRows].sort((a, b) => b.pct - a.pct)[0].mat;
+      primaryResinEl.value = `${primary.name} (${primary.subCategory || '-'})`;
+    }
+  }
 
   const stateEl = document.getElementById('sumPublishState');
   if (stateEl) {
@@ -329,6 +468,13 @@ function updateFormulaSummary() {
     stateEl.innerHTML = publishReady
       ? '<span class="badge badge-green">可发布</span>'
       : '<span class="badge badge-yellow">待完善</span>';
+  }
+  const emptyEl = document.getElementById('formulaLinesEmpty');
+  const linesEl = document.getElementById('formulaLines');
+  if (emptyEl && linesEl) {
+    const hasRows = metrics.rows.length > 0;
+    emptyEl.style.display = hasRows ? 'none' : 'flex';
+    linesEl.style.display = hasRows ? 'block' : 'none';
   }
   renderFormulaMaterialPool();
 }
@@ -348,9 +494,9 @@ function saveFormula(forceStatus) {
 
   const data = {
     name, code: document.getElementById('formulaCode').value,
-    category: document.getElementById('formulaCategory').value,
+    category: inferFormulaCategoryFromLines(lines),
     status: forceStatus || 'experiment',
-    desc: document.getElementById('formulaDesc').value.trim(),
+    baseBatchKg: Math.max(1, parseFloat(document.getElementById('formulaBaseBatchKg')?.value || '1000') || 1000),
     lines,
   };
 
@@ -367,6 +513,7 @@ function saveFormula(forceStatus) {
     showToast('配方已创建');
   }
   saveDB(db);
+  formulaLeaveBypass = true;
   backToFormulaList();
 }
 

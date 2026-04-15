@@ -10,5 +10,11 @@ function showToast(msg, type='success') {
 
 
 // ===== Modal =====
-function openModal(id) { document.getElementById(id).classList.add('show'); setTimeout(function(){if(window.lucide)lucide.createIcons()},10); }
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+  setTimeout(function () {
+    if (typeof window.refreshCustomSelects === 'function') window.refreshCustomSelects(document);
+    if (window.lucide) lucide.createIcons();
+  }, 10);
+}
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
