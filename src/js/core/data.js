@@ -103,6 +103,30 @@ function normalizeDB(raw) {
     }
     return m;
   });
+  const pad2 = n => String(n).padStart(2, '0');
+  const formatStamp = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const shiftStamp = (dateStr, days, hm) => {
+    if (!dateStr) return '';
+    const base = new Date(String(dateStr).includes('T') ? String(dateStr) : `${dateStr}T00:00:00`);
+    if (isNaN(base.getTime())) return String(dateStr);
+    if (hm) {
+      const [hh, mm] = hm.split(':').map(Number);
+      base.setHours(hh || 0, mm || 0, 0, 0);
+    }
+    if (days) base.setDate(base.getDate() + days);
+    return formatStamp(base);
+  };
+  merged.orders = (merged.orders || []).map(order => {
+    const next = { ...order };
+    if (!next.receivedAt) next.receivedAt = next.createdAt ? `${next.createdAt} 09:00` : '';
+    if (['producing', 'completed', 'shipped'].includes(next.status) && !next.producingAt) next.producingAt = shiftStamp(next.createdAt || next.receivedAt, 1, '10:00');
+    if (['completed', 'shipped'].includes(next.status) && !next.completedAt) next.completedAt = shiftStamp(next.createdAt || next.receivedAt, 2, '16:00');
+    if (next.status === 'shipped' && !next.shippedAt) next.shippedAt = shiftStamp(next.createdAt || next.receivedAt, 3, '14:00');
+    if (['producing', 'completed', 'shipped'].includes(next.status) && !next.rawDeductedAt) next.rawDeductedAt = shiftStamp(next.createdAt || next.receivedAt, 1, '10:30');
+    if (['completed', 'shipped'].includes(next.status) && !next.finishedGoodsInAt) next.finishedGoodsInAt = shiftStamp(next.createdAt || next.receivedAt, 2, '16:30');
+    if (next.status === 'shipped' && !next.settledAt) next.settledAt = shiftStamp(next.createdAt || next.receivedAt, 4, '10:00');
+    return next;
+  });
   if (!Array.isArray(merged.productionPlans)) merged.productionPlans = [];
   return merged;
 }

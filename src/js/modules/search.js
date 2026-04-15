@@ -12,7 +12,7 @@ function handleGlobalSearch(e) {
   const opsKeywords = ['运营', '风险', '补货', '采购', '缺料'];
   if (foundMat.length) { navigateTo(foundMat[0].category === 'resin' ? 'inventory-resin' : foundMat[0].category === 'additive' ? 'inventory-additive' : 'inventory-auxiliary'); }
   else if (foundFormula.length) { navigateTo('formula'); }
-  else if (foundOrder.length) { navigateTo('order'); }
+  else if (foundOrder.length) { openOrderDetail(foundOrder[0].id); }
   else if (opsKeywords.some(k => q.includes(k))) { navigateTo('operations'); }
   else if (ticketKeywords.some(k => q.includes(k))) { navigateTo('ticket'); }
   else if (productionKeywords.some(k => q.includes(k))) { navigateTo('production'); }

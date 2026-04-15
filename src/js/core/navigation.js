@@ -47,6 +47,10 @@ function navigateTo(page) {
     const formulaNav = document.querySelector('.nav-item[data-page="formula"]');
     if (formulaNav) formulaNav.classList.add('active');
   }
+  if (page === 'order-detail') {
+    const orderNav = document.querySelector('.nav-item[data-page="order"]');
+    if (orderNav) orderNav.classList.add('active');
+  }
 
   document.getElementById('headerTitle').textContent = pageTitles[page] || page;
   refreshCurrentPage();

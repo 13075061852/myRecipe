@@ -258,29 +258,24 @@
   <div class="page active" id="page-dashboard">
     <!-- Welcome Banner -->
     <div class="dash-welcome" id="dashWelcome"></div>
-    <!-- KPI Cards -->
-    <div class="dash-kpi-grid" id="dashKpi"></div>
     <!-- Row: Donut + Pipeline -->
     <div class="dash-grid-2">
       <div class="panel">
-        <div class="panel-header"><h2>库存价值分布</h2></div>
+        <div class="panel-header"><h2>收入分析</h2></div>
         <div class="panel-body" id="dashDonut"></div>
       </div>
       <div class="panel">
-        <div class="panel-header"><h2>订单生产管线</h2></div>
+        <div class="panel-header production-plan-header">
+          <h2>每日生产计划</h2>
+          <div class="production-orders-tabs" id="dashPipelineTabs"></div>
+        </div>
         <div class="panel-body" id="dashPipeline"></div>
       </div>
     </div>
-    <!-- Row: Top Materials + Formula Cost -->
-    <div class="dash-grid-2">
-      <div class="panel">
-        <div class="panel-header"><h2>库存 Top 8 材料 (按价值)</h2></div>
-        <div class="panel-body" id="dashTopMaterials"></div>
-      </div>
-      <div class="panel">
-        <div class="panel-header"><h2>配方成本排行</h2></div>
-        <div class="panel-body" id="dashFormulaCost"></div>
-      </div>
+    <!-- Row: Customer Orders -->
+    <div class="panel">
+      <div class="panel-header"><h2>客户订单分析</h2></div>
+      <div class="panel-body" id="dashCustomerOrders"></div>
     </div>
     <!-- Row: Recent Orders + Low Stock -->
     <div class="dash-grid-21">
@@ -293,7 +288,7 @@
       <div class="panel">
         <div class="panel-header"><h2>库存预警</h2></div>
         <div class="panel-body no-pad">
-          <div class="table-wrap"><table><thead><tr><th>材料</th><th>库存</th><th>状态</th></tr></thead><tbody id="dashLowStock"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>材料</th><th>库存</th><th>安全库存</th><th>状态</th></tr></thead><tbody id="dashLowStock"></tbody></table></div>
         </div>
       </div>
     </div>
@@ -732,6 +727,23 @@
           </table>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ========== Order Detail ========== -->
+  <div class="page" id="page-order-detail">
+    <div class="panel">
+      <div class="panel-header order-detail-header">
+        <div class="order-detail-heading">
+          <button class="btn btn-sm btn-outline" onclick="navigateTo('order')">返回订单列表</button>
+          <div>
+            <h2 id="orderDetailTitle">订单详情</h2>
+            <div class="order-detail-subtitle" id="orderDetailSubtitle"></div>
+          </div>
+        </div>
+        <div class="btn-group" id="orderDetailActions"></div>
+      </div>
+      <div class="panel-body" id="orderDetailBody"></div>
     </div>
   </div>
 
