@@ -11,7 +11,6 @@ function renderDataSourcePage() {
   document.getElementById('dsTableMaterials').value = t.materials || 'materials';
   document.getElementById('dsTableFormulas').value = t.formulas || 'formulas';
   document.getElementById('dsTableOrders').value = t.orders || 'orders';
-  document.getElementById('dsTableProductionPlans').value = t.productionPlans || 'production_plans';
   document.getElementById('dsTableSuppliers').value = t.suppliers || 'suppliers';
   document.getElementById('dsTableCustomers').value = t.customers || 'customers';
   document.getElementById('dsTableUsers').value = t.users || 'users';
@@ -20,7 +19,6 @@ function renderDataSourcePage() {
   document.getElementById('migCountMaterials').textContent = counts.materials;
   document.getElementById('migCountFormulas').textContent = counts.formulas;
   document.getElementById('migCountOrders').textContent = counts.orders;
-  document.getElementById('migCountProductionPlans').textContent = counts.productionPlans || 0;
   document.getElementById('migCountSuppliers').textContent = counts.suppliers;
   document.getElementById('migCountCustomers').textContent = counts.customers;
   document.getElementById('migCountUsers').textContent = counts.users;
@@ -41,7 +39,6 @@ function collectDataSourceForm() {
         materials: (document.getElementById('dsTableMaterials').value || 'materials').trim(),
         formulas: (document.getElementById('dsTableFormulas').value || 'formulas').trim(),
         orders: (document.getElementById('dsTableOrders').value || 'orders').trim(),
-        productionPlans: (document.getElementById('dsTableProductionPlans').value || 'production_plans').trim(),
         suppliers: (document.getElementById('dsTableSuppliers').value || 'suppliers').trim(),
         customers: (document.getElementById('dsTableCustomers').value || 'customers').trim(),
         users: (document.getElementById('dsTableUsers').value || 'users').trim(),

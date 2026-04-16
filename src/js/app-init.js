@@ -11,7 +11,6 @@ function bootstrapPageRegistry() {
     { page: 'formula-edit', title: '配方编辑', render: function() {} },
     { page: 'order', title: '订单管理', render: renderOrderList },
     { page: 'order-detail', title: '订单详情', render: renderOrderDetail },
-    { page: 'operations', title: '运营中心', render: renderOperationsPage },
     { page: 'supplier', title: '供应商管理', render: renderSupplierList },
     { page: 'customer', title: '客户管理', render: renderCustomerList },
     { page: 'report', title: '数据报表', render: renderReport },

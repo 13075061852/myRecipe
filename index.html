@@ -182,9 +182,6 @@
     <div class="nav-item" data-page="order">
       <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> 订单管理
     </div>
-    <div class="nav-item" data-page="operations">
-      <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 2 2 5-5"/></svg> 运营中心
-    </div>
     <div class="nav-section">基础数据</div>
     <div class="nav-item" data-page="supplier">
       <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg> 供应商管理
@@ -267,7 +264,6 @@
       <div class="panel">
         <div class="panel-header production-plan-header">
           <h2>每日生产计划</h2>
-          <div class="production-orders-tabs" id="dashPipelineTabs"></div>
         </div>
         <div class="panel-body" id="dashPipeline"></div>
       </div>
@@ -291,45 +287,6 @@
           <div class="table-wrap"><table><thead><tr><th>材料</th><th>库存</th><th>安全库存</th><th>状态</th></tr></thead><tbody id="dashLowStock"></tbody></table></div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- ========== Operations Center ========== -->
-  <div class="page" id="page-operations">
-    <div class="stat-cards" id="opsKpi"></div>
-    <div class="dash-grid-2">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>原料短缺风险（未来计划）</h2>
-          <button class="btn btn-sm btn-outline" onclick="exportTableCSV('opsRiskTable','ops-shortage-risk.csv')">导出</button>
-        </div>
-        <div class="panel-body no-pad">
-          <div class="table-wrap">
-            <table id="opsRiskTable">
-              <thead><tr><th>材料</th><th>当前库存</th><th>预计需求</th><th>缺口</th><th>风险</th></tr></thead>
-              <tbody id="opsRiskBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-header">
-          <h2>补货建议（采购清单）</h2>
-          <button class="btn btn-sm btn-outline" onclick="exportTableCSV('opsReplenishTable','ops-replenish-plan.csv')">导出</button>
-        </div>
-        <div class="panel-body no-pad">
-          <div class="table-wrap">
-            <table id="opsReplenishTable">
-              <thead><tr><th>材料</th><th>建议采购量(kg)</th><th>参考单价</th><th>预计金额</th><th>建议</th></tr></thead>
-              <tbody id="opsReplenishBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-header"><h2>销售库存结构（代理 / 自产）</h2></div>
-      <div class="panel-body" id="opsSalesMix"></div>
     </div>
   </div>
 
@@ -618,14 +575,14 @@
       <div class="panel-header">
         <h2>每日生产计划</h2>
         <div class="filters">
-          <input type="date" id="productionDateFilter" onchange="renderProductionPage()">
+          <input type="date" id="productionDateFilter" onchange="syncProductionDateFilter()">
         </div>
       </div>
       <div class="panel-body">
         <div class="form-row-3">
           <div class="form-group">
-            <label>计划日期</label>
-            <input type="date" class="form-control" id="planDate">
+            <label>计划日期（默认跟随上方筛选）</label>
+            <input type="date" class="form-control" id="planDate" onchange="syncProductionPlanDate()">
           </div>
           <div class="form-group">
             <label>订单</label>
@@ -708,10 +665,12 @@
           <div class="filters">
             <select id="orderFilterStatus" onchange="renderOrderList()">
               <option value="">全部状态</option>
-              <option value="pending">待生产</option>
+              <option value="pending">待处理</option>
+              <option value="scheduled">已安排</option>
               <option value="producing">生产中</option>
               <option value="completed">已完成</option>
               <option value="shipped">已发货</option>
+              <option value="settled">已结清</option>
               <option value="cancelled">已取消</option>
             </select>
             <input type="date" id="orderFilterDate" onchange="renderOrderList()">
@@ -953,14 +912,6 @@
         </div>
         <div class="form-row-3">
           <div class="form-group">
-            <label>production_plans 表名</label>
-            <input class="form-control" id="dsTableProductionPlans">
-          </div>
-          <div class="form-group"></div>
-          <div class="form-group"></div>
-        </div>
-        <div class="form-row-3">
-          <div class="form-group">
             <label>suppliers 表名</label>
             <input class="form-control" id="dsTableSuppliers">
           </div>
@@ -991,7 +942,6 @@
           <dt>本地材料数</dt><dd id="migCountMaterials">0</dd>
           <dt>本地配方数</dt><dd id="migCountFormulas">0</dd>
           <dt>本地订单数</dt><dd id="migCountOrders">0</dd>
-          <dt>本地生产计划数</dt><dd id="migCountProductionPlans">0</dd>
           <dt>本地供应商数</dt><dd id="migCountSuppliers">0</dd>
           <dt>本地客户数</dt><dd id="migCountCustomers">0</dd>
           <dt>本地用户数</dt><dd id="migCountUsers">0</dd>
@@ -1113,10 +1063,12 @@
         <div class="form-group">
           <label>状态</label>
           <select class="form-control" id="orderStatus">
-            <option value="pending">待生产</option>
+            <option value="pending">待处理</option>
+            <option value="scheduled">已安排</option>
             <option value="producing">生产中</option>
             <option value="completed">已完成</option>
             <option value="shipped">已发货</option>
+            <option value="settled">已结清</option>
           </select>
         </div>
       </div>
@@ -1350,6 +1302,38 @@
   </div>
 </div>
 
+<!-- Production Plan Edit Modal -->
+<div class="modal-overlay" id="productionPlanEditModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>修改生产计划</h3>
+      <button class="modal-close" onclick="closeProductionPlanEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="productionPlanEditId">
+      <div class="form-group">
+        <label>关联订单</label>
+        <input type="text" class="form-control" id="productionPlanEditOrder" readonly>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>计划日期</label>
+          <input type="date" class="form-control" id="productionPlanEditDate">
+        </div>
+        <div class="form-group">
+          <label>备注</label>
+          <input type="text" class="form-control" id="productionPlanEditRemark" placeholder="班组/设备/优先级">
+        </div>
+      </div>
+      <div class="hint" style="margin-top:8px;color:var(--gray-500);font-size:12px">仅待开工计划可以修改；如果计划已进入生产中，请先处理完工或取消。</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeProductionPlanEditModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveProductionPlanEdit()">保存修改</button>
+    </div>
+  </div>
+</div>
+
 <script src="src/js/core/app-config.js"></script>
 <script src="src/js/core/events.js"></script>
 <script src="src/js/core/data.js"></script>
@@ -1365,7 +1349,6 @@
 <script src="src/js/modules/order.js"></script>
 <script src="src/js/modules/party.js"></script>
 <script src="src/js/modules/report.js"></script>
-<script src="src/js/modules/operations.js"></script>
 <script src="src/js/modules/search.js"></script>
 <script src="src/js/modules/user.js"></script>
 <script src="src/js/modules/datasource.js"></script>

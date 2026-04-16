@@ -82,15 +82,14 @@ const DEFAULT_DATA = {
     { id:'C003', name:'泰科电子', contact:'周工', phone:'021-61234567', email:'zhou@te.com', industry:'电子', address:'上海市浦东新区' },
     { id:'C004', name:'美的集团', contact:'马经理', phone:'0757-26331234', email:'ma@midea.com', industry:'家电', address:'广东省佛山市' },
   ],
-  productionPlans: [
-    { id:'PP-20260404-001', planDate:'2026-04-04', orderId:'ORD-20260315', formulaId:'F001', qty:3000, status:'planned', remark:'A班优先生产', createdAt:'2026-04-04' }
-  ],
 };
 
 
 // ===== DB Helpers =====
 function normalizeDB(raw) {
   const merged = { ...JSON.parse(JSON.stringify(DEFAULT_DATA)), ...(raw || {}) };
+  delete merged.productionPlans;
+  delete merged.production_plans;
   merged.materials = (merged.materials || []).map(m => {
     if (m.category === 'auxiliary') {
       const next = { ...m };
@@ -119,15 +118,14 @@ function normalizeDB(raw) {
   merged.orders = (merged.orders || []).map(order => {
     const next = { ...order };
     if (!next.receivedAt) next.receivedAt = next.createdAt ? `${next.createdAt} 09:00` : '';
-    if (['producing', 'completed', 'shipped'].includes(next.status) && !next.producingAt) next.producingAt = shiftStamp(next.createdAt || next.receivedAt, 1, '10:00');
-    if (['completed', 'shipped'].includes(next.status) && !next.completedAt) next.completedAt = shiftStamp(next.createdAt || next.receivedAt, 2, '16:00');
-    if (next.status === 'shipped' && !next.shippedAt) next.shippedAt = shiftStamp(next.createdAt || next.receivedAt, 3, '14:00');
-    if (['producing', 'completed', 'shipped'].includes(next.status) && !next.rawDeductedAt) next.rawDeductedAt = shiftStamp(next.createdAt || next.receivedAt, 1, '10:30');
-    if (['completed', 'shipped'].includes(next.status) && !next.finishedGoodsInAt) next.finishedGoodsInAt = shiftStamp(next.createdAt || next.receivedAt, 2, '16:30');
-    if (next.status === 'shipped' && !next.settledAt) next.settledAt = shiftStamp(next.createdAt || next.receivedAt, 4, '10:00');
+    if (['producing', 'completed', 'shipped', 'settled'].includes(next.status) && !next.producingAt) next.producingAt = shiftStamp(next.createdAt || next.receivedAt, 1, '10:00');
+    if (['completed', 'shipped', 'settled'].includes(next.status) && !next.completedAt) next.completedAt = shiftStamp(next.createdAt || next.receivedAt, 2, '16:00');
+    if (['shipped', 'settled'].includes(next.status) && !next.shippedAt) next.shippedAt = shiftStamp(next.createdAt || next.receivedAt, 3, '14:00');
+    if (['producing', 'completed', 'shipped', 'settled'].includes(next.status) && !next.rawDeductedAt) next.rawDeductedAt = shiftStamp(next.createdAt || next.receivedAt, 1, '10:30');
+    if (['completed', 'shipped', 'settled'].includes(next.status) && !next.finishedGoodsInAt) next.finishedGoodsInAt = shiftStamp(next.createdAt || next.receivedAt, 2, '16:30');
+    if (['shipped', 'settled'].includes(next.status) && !next.settledAt) next.settledAt = shiftStamp(next.createdAt || next.receivedAt, 4, '10:00');
     return next;
   });
-  if (!Array.isArray(merged.productionPlans)) merged.productionPlans = [];
   return merged;
 }
 

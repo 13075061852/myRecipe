@@ -110,7 +110,7 @@ function renderDashboard() {
   // Revenue analysis
   const revenueOrders = db.orders.filter(o => o.status !== 'cancelled');
   const totalRevenue = revenueOrders.reduce((s, o) => s + o.qty * o.price, 0);
-  const confirmedRevenue = revenueOrders.filter(o => ['completed', 'shipped'].includes(o.status)).reduce((s, o) => s + o.qty * o.price, 0);
+  const confirmedRevenue = revenueOrders.filter(o => ['completed', 'shipped', 'settled'].includes(o.status)).reduce((s, o) => s + o.qty * o.price, 0);
   const pendingRevenue = Math.max(0, totalRevenue - confirmedRevenue);
   const avgOrderValue = revenueOrders.length ? totalRevenue / revenueOrders.length : 0;
   const revenueByCustomer = db.customers.map(c => {
@@ -201,23 +201,36 @@ function renderDashboard() {
     </div>
   `;
 
-  // Daily production orders
+  // Daily production plans
   const pad2 = n => String(n).padStart(2, '0');
   const toDateKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   const todayKey = toDateKey(now);
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowKey = toDateKey(tomorrow);
-  const activePlanOrders = db.orders
-    .filter(o => ['pending', 'producing'].includes(o.status))
-    .sort((a, b) => (a.deliveryDate || '').localeCompare(b.deliveryDate || '') || (a.createdAt || '').localeCompare(b.createdAt || ''));
+  const todayPlans = (db.orders || [])
+    .filter(o => ['scheduled', 'producing', 'completed'].includes(o.status))
+    .filter(o => {
+      const planDate = o.scheduledAt ? String(o.scheduledAt).slice(0, 10) : '';
+      return planDate === todayKey;
+    })
+    .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
 
   function planStatusText(status) {
     const map = {
-      pending: '待生产',
+      planned: '待开工',
+      in_progress: '生产中',
+      completed: '已完成',
+      cancelled: '已取消',
+    };
+    return map[status] || status || '-';
+  }
+
+  function orderStatusText(status) {
+    const map = {
+      pending: '待处理',
+      scheduled: '已安排',
       producing: '生产中',
       completed: '已完成',
       shipped: '已发货',
+      settled: '已结清',
       cancelled: '已取消',
     };
     return map[status] || status || '-';
@@ -225,118 +238,79 @@ function renderDashboard() {
 
   function planStatusBadge(status) {
     const text = planStatusText(status);
-    if (status === 'pending') return `<span class="badge badge-yellow">${text}</span>`;
-    if (status === 'producing') return `<span class="badge badge-blue">${text}</span>`;
+    if (status === 'planned') return `<span class="badge badge-yellow">${text}</span>`;
+    if (status === 'in_progress') return `<span class="badge badge-blue">${text}</span>`;
     if (status === 'completed') return `<span class="badge badge-green">${text}</span>`;
-    if (status === 'shipped') return `<span class="badge badge-green">${text}</span>`;
     if (status === 'cancelled') return `<span class="badge badge-red">${text}</span>`;
     return `<span class="badge badge-gray">${text}</span>`;
   }
 
-  function buildPlanRows(planDate, sourceOrders) {
-    const actualPlans = (db.productionPlans || [])
-      .filter(p => p.planDate === planDate && p.status !== 'cancelled')
-      .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
-    if (actualPlans.length) {
-      return actualPlans.map(p => {
-        const order = db.orders.find(o => o.id === p.orderId);
-        const customer = order ? db.customers.find(c => c.id === order.customerId) : null;
-        const formula = order ? db.formulas.find(f => f.id === order.formulaId) : null;
-        return {
-          orderId: p.orderId,
-          customerName: customer ? customer.name : '-',
-          formulaName: formula ? formula.name : '-',
-          qty: p.qty || (order ? order.qty : 0),
-          deliveryDate: order ? order.deliveryDate : '-',
-          status: order ? order.status : p.status,
-        };
-      });
-    }
-    return sourceOrders.map(o => {
-      const customer = db.customers.find(c => c.id === o.customerId);
-      const formula = db.formulas.find(f => f.id === o.formulaId);
-      return {
-        orderId: o.id,
-        customerName: customer ? customer.name : '-',
-        formulaName: formula ? formula.name : '-',
-        qty: o.qty,
-        deliveryDate: o.deliveryDate || '-',
-        status: o.status,
-      };
-    });
-  }
+  const planSummary = {
+    total: todayPlans.length,
+    planned: todayPlans.filter(p => p.status === 'scheduled').length,
+    inProgress: todayPlans.filter(p => p.status === 'producing').length,
+    completed: todayPlans.filter(p => ['completed', 'shipped', 'settled'].includes(p.status)).length,
+  };
 
-  const halfPoint = Math.ceil(activePlanOrders.length / 2);
-  const todayOrders = buildPlanRows(todayKey, activePlanOrders.slice(0, halfPoint));
-  const tomorrowOrders = buildPlanRows(tomorrowKey, activePlanOrders.slice(halfPoint));
-
-  function renderOrderTable(rows) {
+  const planRowsHtml = todayPlans.length ? todayPlans.map(p => {
+    const order = p;
+    const customer = order ? db.customers.find(c => c.id === order.customerId) : null;
+    const formula = order ? db.formulas.find(f => f.id === order.formulaId) : null;
+    const planStatus = order.status === 'scheduled' ? 'planned' : order.status === 'producing' ? 'in_progress' : 'completed';
     return `
-      ${rows.length ? `
-        <div class="table-wrap">
-          <table class="production-order-table">
-            <thead>
-              <tr>
-                <th>订单号</th>
-                <th>客户</th>
-                <th>配方</th>
-                <th>数量</th>
-                <th>交期</th>
-                <th>状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows.map(row => `
-                <tr>
-                  <td><strong>${row.orderId}</strong></td>
-                  <td>${row.customerName}</td>
-                  <td>${row.formulaName}</td>
-                  <td>${Number(row.qty || 0).toLocaleString()} kg</td>
-                  <td>${row.deliveryDate || '-'}</td>
-                  <td>${planStatusBadge(row.status)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+      <div class="production-plan-row">
+        <div class="production-plan-row-main">
+          <div class="production-plan-row-top">
+            <strong>${order.id}</strong>
+            ${planStatusBadge(planStatus)}
+          </div>
+          <div class="production-plan-row-sub">
+            ${customer ? customer.name : '-'} · ${formula ? formula.name : '-'}
+          </div>
+          <div class="production-plan-row-meta">
+            <span>数量 ${Number(order.qty || 0).toLocaleString()} kg</span>
+            <span>交期 ${order && order.deliveryDate ? order.deliveryDate : '-'}</span>
+            <span>订单状态 ${order ? orderStatusText(order.status) : '-'}</span>
+          </div>
         </div>
-      ` : `<div class="production-order-empty">暂无订单</div>`}
+      </div>
     `;
-  }
-
-  const tabsHost = document.getElementById('dashPipelineTabs');
-  if (tabsHost) {
-    tabsHost.innerHTML = `
-      <button class="production-orders-tab active" data-plan-tab="today" onclick="switchProductionPlanTab('today')">今天 <span>${todayOrders.length}</span></button>
-      <button class="production-orders-tab" data-plan-tab="tomorrow" onclick="switchProductionPlanTab('tomorrow')">明天 <span>${tomorrowOrders.length}</span></button>
-    `;
-  }
+  }).join('') : '<div class="production-plan-empty">今天没有生产计划数据</div>';
 
   document.getElementById('dashPipeline').innerHTML = `
-    <div class="production-orders-pane active" data-plan-pane="today">
-      ${renderOrderTable(todayOrders)}
-    </div>
-    <div class="production-orders-pane" data-plan-pane="tomorrow">
-      ${renderOrderTable(tomorrowOrders)}
+    <div class="production-plan-shell">
+      <div class="production-plan-summary-bar">
+        <div class="production-plan-summary-chip">
+          <span>今日计划</span>
+          <strong>${planSummary.total}</strong>
+        </div>
+        <div class="production-plan-summary-chip">
+          <span>待开工</span>
+          <strong>${planSummary.planned}</strong>
+        </div>
+        <div class="production-plan-summary-chip">
+          <span>生产中</span>
+          <strong>${planSummary.inProgress}</strong>
+        </div>
+        <div class="production-plan-summary-chip warn">
+          <span>已完成</span>
+          <strong>${planSummary.completed}</strong>
+        </div>
+      </div>
+      <div class="production-plan-card">
+        <div class="production-plan-head">
+          <div>
+            <strong>今日生产明细</strong>
+            <span>直接读取生产计划数据，不再使用拆分订单的演示数据</span>
+          </div>
+          <div class="production-plan-date">${todayKey}</div>
+        </div>
+        <div class="production-plan-list">
+          ${planRowsHtml}
+        </div>
+      </div>
     </div>
   `;
-
-  window.switchProductionPlanTab = function(tab) {
-    const shell = document.getElementById('dashPipeline');
-    const tabsHost = document.getElementById('dashPipelineTabs');
-    if (!shell) return;
-    if (tabsHost) {
-      tabsHost.querySelectorAll('[data-plan-tab]').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-plan-tab') === tab);
-      });
-    }
-    shell.querySelectorAll('[data-plan-tab]').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-plan-tab') === tab);
-    });
-    shell.querySelectorAll('[data-plan-pane]').forEach(pane => {
-      pane.classList.toggle('active', pane.getAttribute('data-plan-pane') === tab);
-    });
-  };
-  window.switchProductionPlanTab('today');
 
   // Customer order module
   document.getElementById('dashCustomerOrders').innerHTML = `

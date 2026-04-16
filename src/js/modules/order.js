@@ -1,4 +1,4 @@
-// ===== Order =====
+﻿// ===== Order =====
 let currentOrderDetailId = '';
 
 function padOrderPart(v) {
@@ -36,13 +36,16 @@ function ensureOrderLifecycle(order) {
   if (!order.receivedAt) {
     order.receivedAt = order.createdAt ? `${order.createdAt} 09:00` : formatOrderDateTime(new Date());
   }
-  if (['producing', 'completed', 'shipped'].includes(order.status) && !order.producingAt) {
+  if (order.status === 'scheduled' && !order.scheduledAt) {
+    order.scheduledAt = offsetOrderDateTime(order.createdAt || order.receivedAt, 0, '09:30');
+  }
+  if (['producing', 'completed', 'shipped', 'settled'].includes(order.status) && !order.producingAt) {
     order.producingAt = offsetOrderDateTime(order.createdAt || order.receivedAt, 1, '10:00');
   }
-  if (['completed', 'shipped'].includes(order.status) && !order.completedAt) {
+  if (['completed', 'shipped', 'settled'].includes(order.status) && !order.completedAt) {
     order.completedAt = offsetOrderDateTime(order.createdAt || order.receivedAt, 2, '16:00');
   }
-  if (order.status === 'shipped' && !order.shippedAt) {
+  if (['shipped', 'settled'].includes(order.status) && !order.shippedAt) {
     order.shippedAt = offsetOrderDateTime(order.createdAt || order.receivedAt, 3, '14:00');
   }
   return order;
@@ -51,10 +54,10 @@ function ensureOrderLifecycle(order) {
 function syncOrderProcessState(order, formula) {
   if (!order) return;
   ensureOrderLifecycle(order);
-  if (['producing', 'completed', 'shipped'].includes(order.status) && !order.rawDeductedAt) {
+  if (['scheduled', 'producing', 'completed', 'shipped', 'settled'].includes(order.status) && !order.rawDeductedAt && order.status !== 'scheduled') {
     ensureRawMaterialDeducted(order, formula);
   }
-  if (['completed', 'shipped'].includes(order.status) && !order.finishedGoodsInAt) {
+  if (['completed', 'shipped', 'settled'].includes(order.status) && !order.finishedGoodsInAt) {
     upsertFinishedGoodsFromOrder(order, formula);
   }
 }
@@ -85,9 +88,10 @@ function renderOrderList() {
         <div class="btn-group">
           <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editOrder('${o.id}')" title="编辑">${ICO.edit}</button>
           ${o.status === 'pending' ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();advanceOrder('${o.id}')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> 生产</button>` : ''}
+          ${o.status === 'scheduled' ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();advanceOrder('${o.id}')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 开工</button>` : ''}
           ${o.status === 'producing' ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();advanceOrder('${o.id}')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 完成</button>` : ''}
           ${o.status === 'completed' ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();advanceOrder('${o.id}')"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg> 发货</button>` : ''}
-          ${['pending', 'producing'].includes(o.status) ? `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();cancelOrder('${o.id}')" style="color:var(--danger)">✕</button>` : ''}
+          ${['pending', 'scheduled', 'producing'].includes(o.status) ? `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();cancelOrder('${o.id}')" style="color:var(--danger)">✕</button>` : ''}
         </div>
       </td>
     </tr>`;
@@ -95,7 +99,7 @@ function renderOrderList() {
 }
 
 function orderStatusBadge(s) {
-  const map = { pending: ['待生产', 'badge-yellow'], producing: ['生产中', 'badge-blue'], completed: ['已完成', 'badge-green'], shipped: ['已发货', 'badge-green'], cancelled: ['已取消', 'badge-red'] };
+  const map = { pending: ['待处理', 'badge-yellow'], scheduled: ['已安排', 'badge-blue'], producing: ['生产中', 'badge-blue'], completed: ['已完成', 'badge-green'], shipped: ['已发货', 'badge-green'], settled: ['已结清', 'badge-green'], cancelled: ['已取消', 'badge-red'] };
   const [text, cls] = map[s] || [s, 'badge-gray'];
   return `<span class="badge ${cls}">${text}</span>`;
 }
@@ -179,16 +183,17 @@ function renderOrderDetail() {
   ensureOrderLifecycle(order);
   const cust = db.customers.find(c => c.id === order.customerId);
   const form = db.formulas.find(f => f.id === order.formulaId);
-  const plans = db.productionPlans.filter(p => p.orderId === order.id);
   const settlementBadge = order.settledAt ? '<span class="badge badge-green">已结款</span>' : '<span class="badge badge-yellow">待结款</span>';
   const receivedAt = formatOrderDateTime(order.receivedAt);
+  const scheduledAt = order.scheduledAt ? formatOrderDateTime(order.scheduledAt) : '待安排';
   const producingAt = order.producingAt ? formatOrderDateTime(order.producingAt) : '待进入生产';
   const completedAt = order.completedAt ? formatOrderDateTime(order.completedAt) : '待完工';
   const shippedAt = order.shippedAt ? formatOrderDateTime(order.shippedAt) : '待发货';
   const settledAt = order.settledAt ? formatOrderDateTime(order.settledAt) : '待结款';
-  const currentStep = order.status === 'cancelled' ? 0 : order.settledAt ? 5 : order.status === 'shipped' ? 4 : order.status === 'completed' ? 3 : order.status === 'producing' ? 2 : 1;
+  const currentStep = order.status === 'cancelled' ? 0 : order.status === 'settled' ? 6 : order.status === 'shipped' ? 5 : order.status === 'completed' ? 4 : order.status === 'producing' ? 3 : order.status === 'scheduled' ? 2 : 1;
   const timeline = [
     { key: 'receivedAt', title: '接到订单', time: receivedAt, desc: `客户 ${cust ? cust.name : '-'} 提交订单，系统已登记。` },
+    { key: 'scheduledAt', title: '已安排', time: scheduledAt, desc: order.scheduledAt ? `订单已加入生产计划，时间：${formatOrderDateTime(order.scheduledAt)}` : '等待加入生产计划。' },
     { key: 'producingAt', title: '进入生产', time: producingAt, desc: order.rawDeductedAt ? `原料已扣减，时间：${formatOrderDateTime(order.rawDeductedAt)}` : '等待生产部门接单并下达工单。' },
     { key: 'completedAt', title: '生产完成', time: completedAt, desc: order.finishedGoodsInAt ? `成品已自动入销售库存，时间：${formatOrderDateTime(order.finishedGoodsInAt)}` : '等待完工并回写成品库存。' },
     { key: 'shippedAt', title: '已发货', time: shippedAt, desc: order.shippedAt ? '订单已经完成出库与交付。' : '等待物流发货。' },
@@ -199,7 +204,7 @@ function renderOrderDetail() {
     const need = order.qty * l.pct / 100;
     return `<tr><td>${mat ? mat.name : l.matId}</td><td>${l.pct.toFixed(2)}%</td><td>${need.toLocaleString(undefined, { maximumFractionDigits: 2 })} kg</td><td>${mat ? mat.stock.toLocaleString() : '-' } kg</td></tr>`;
   }).join('') : '<tr><td colspan="4" class="empty">未找到关联配方</td></tr>';
-  const planRows = plans.length ? plans.map(p => `<tr><td>${p.id}</td><td>${p.planDate}</td><td>${p.qty.toLocaleString()} kg</td><td>${p.status}</td></tr>`).join('') : '<tr><td colspan="4" class="empty">暂无关联生产计划</td></tr>';
+  const planRows = order.scheduledAt ? `<tr><td>${order.id}</td><td>${formatOrderDateTime(order.scheduledAt)}</td><td>${order.qty.toLocaleString()} kg</td><td>${order.status === 'scheduled' ? '待开工' : order.status === 'producing' ? '生产中' : order.status === 'completed' ? '已完工' : order.status}</td></tr>` : '<tr><td colspan="4" class="empty">暂无关联生产计划</td></tr>';
 
   titleEl.textContent = `订单详情 · ${order.id}`;
   subtitleEl.textContent = `${cust ? cust.name : '-'} · ${form ? form.name : '-'} · ${orderStatusBadge(order.status).replace(/<[^>]+>/g, '')}`;
@@ -293,6 +298,7 @@ function settleOrder(id) {
     return;
   }
   o.settledAt = formatOrderDateTime(new Date());
+  o.status = 'settled';
   saveDB(db);
   showToast(`订单 ${o.id} 已结款`);
   renderOrderDetail();
@@ -402,11 +408,14 @@ function saveOrder() {
 function advanceOrder(id) {
   const o = db.orders.find(x => x.id === id);
   if (!o) return;
-  const flow = { pending: 'producing', producing: 'completed', completed: 'shipped' };
+  const flow = { pending: 'scheduled', scheduled: 'producing', producing: 'completed', completed: 'shipped' };
   const next = flow[o.status];
   if (next) {
     const f = db.formulas.find(x => x.id === o.formulaId);
     if (o.status === 'pending') {
+      o.scheduledAt = o.scheduledAt || formatOrderDateTime(new Date());
+    }
+    if (o.status === 'scheduled' && next === 'producing') {
       ensureRawMaterialDeducted(o, f);
       o.producingAt = o.producingAt || formatOrderDateTime(new Date());
     }

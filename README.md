@@ -34,7 +34,6 @@
   - `party.js`：供应商与客户。
   - `production.js`：生产计划。
   - `ticket.js`：开单打印。
-  - `operations.js`：运营中心。
   - `report.js`：数据报表。
   - `datasource.js`：数据源配置页与迁移准备工具。
   - `search.js`：全局搜索与页面跳转辅助逻辑。
@@ -72,7 +71,6 @@
   - `production`
   - `ticket`
   - `order`
-  - `operations`
 - 基础数据类
   - `supplier`
   - `customer`

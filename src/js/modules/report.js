@@ -37,7 +37,7 @@ function renderReport() {
   document.getElementById('reportFormulaTop').innerHTML = top.map((f,i) => `<tr><td>${i+1}</td><td>${f.name}</td><td>${f.usageCount||0}</td><td>¥${calcFormulaCost(f).toFixed(2)}</td></tr>`).join('');
   const totalOrders = db.orders.length;
   const totalRevenue = db.orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+o.qty*o.price,0);
-  const completedOrders = db.orders.filter(o=>['completed','shipped'].includes(o.status)).length;
+  const completedOrders = db.orders.filter(o=>['completed','shipped','settled'].includes(o.status)).length;
   document.getElementById('reportOrderStats').innerHTML = `
     <div class="stat-card"><div class="stat-icon" style="background:var(--primary-light)">${ICO.package}</div><div class="stat-info"><h3>${totalOrders}</h3><p>订单总数</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:var(--success-light)">${ICO.dollar}</div><div class="stat-info"><h3>¥${(totalRevenue/10000).toFixed(1)}万</h3><p>订单总额</p></div></div>

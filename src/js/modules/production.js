@@ -1,10 +1,22 @@
-// ===== Production Planning =====
+﻿// ===== Production Planning =====
 function getTodayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function ensureProductionState() {
-  if (!Array.isArray(db.productionPlans)) db.productionPlans = [];
+function getPlanDateKey(order) {
+  if (!order) return '';
+  if (!order.scheduledAt) return '';
+  const raw = String(order.scheduledAt).trim();
+  return raw.includes(' ') ? raw.slice(0, 10) : raw.slice(0, 10);
+}
+
+function getProductionPlanStatusFromOrder(order) {
+  if (!order) return '';
+  if (order.status === 'scheduled') return 'planned';
+  if (order.status === 'producing') return 'in_progress';
+  if (['completed', 'shipped', 'settled'].includes(order.status)) return 'completed';
+  if (order.status === 'cancelled') return 'cancelled';
+  return '';
 }
 
 function getFormulaById(id) {
@@ -25,22 +37,22 @@ function checkStockForProductionOrder(order) {
 }
 
 function renderProductionPage() {
-  ensureProductionState();
   const dateFilterEl = document.getElementById('productionDateFilter');
   const planDateEl = document.getElementById('planDate');
   if (!dateFilterEl.value) dateFilterEl.value = getTodayStr();
   if (!planDateEl.value) planDateEl.value = dateFilterEl.value;
 
   const planOrderSel = document.getElementById('planOrderId');
-  const pendingOrders = db.orders.filter(o => ['pending', 'producing'].includes(o.status));
+  const pendingOrders = db.orders.filter(o => o.status === 'pending');
   planOrderSel.innerHTML = '<option value="">-- 选择订单 --</option>' + pendingOrders.map(o => {
     const f = getFormulaById(o.formulaId);
     return `<option value="${o.id}">${o.id} · ${f ? f.name : o.formulaId} · ${o.qty}kg · ${orderStatusBadge(o.status).replace(/<[^>]+>/g,'')}</option>`;
   }).join('');
 
   const planDate = dateFilterEl.value;
-  const plans = db.productionPlans
-    .filter(p => p.planDate === planDate)
+  const plans = db.orders
+    .filter(order => ['scheduled', 'producing', 'completed'].includes(order.status))
+    .filter(order => getPlanDateKey(order) === planDate)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const tbody = document.getElementById('productionPlanBody');
   if (!plans.length) {
@@ -56,27 +68,102 @@ function renderProductionPage() {
   };
 
   tbody.innerHTML = plans.map(p => {
-    const order = db.orders.find(o => o.id === p.orderId);
-    const formula = getFormulaById(p.formulaId);
+    const order = p;
+    const formula = getFormulaById(order.formulaId);
     const customer = order ? db.customers.find(c => c.id === order.customerId) : null;
-    const canStart = p.status === 'planned' && order && order.status === 'pending';
-    const canComplete = p.status === 'in_progress' && order && order.status === 'producing';
+    const planStatus = getProductionPlanStatusFromOrder(order);
+    const canStart = order && order.status === 'scheduled';
+    const canComplete = order && order.status === 'producing';
+    const canEdit = order && order.status === 'scheduled';
+    const canDelete = order && order.status === 'scheduled';
     return `<tr>
-      <td>${p.planDate}</td>
-      <td>${p.orderId}</td>
+      <td>${getPlanDateKey(order)}</td>
+      <td>${order.id}</td>
       <td>${customer ? customer.name : '-'}</td>
       <td>${formula ? formula.name : '-'}</td>
-      <td>${p.qty}</td>
-      <td>${statusMap[p.status] || p.status}</td>
+      <td>${order.qty}</td>
+      <td>${statusMap[planStatus] || planStatus || '-'}</td>
       <td>
         <div class="btn-group">
-          ${canStart ? `<button class="btn btn-sm btn-success" onclick="startProductionPlan('${p.id}')">开单生产</button>` : ''}
-          ${canComplete ? `<button class="btn btn-sm btn-primary" onclick="completeProductionPlan('${p.id}')">完工入库</button>` : ''}
+          ${canEdit ? `<button class="btn btn-sm btn-outline" onclick="openProductionPlanEdit('${order.id}')">修改</button>` : ''}
+          ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteProductionPlan('${order.id}')">删除</button>` : ''}
+          ${canStart ? `<button class="btn btn-sm btn-success" onclick="startProductionPlan('${order.id}')">开单生产</button>` : ''}
+          ${canComplete ? `<button class="btn btn-sm btn-primary" onclick="completeProductionPlan('${order.id}')">完工入库</button>` : ''}
         </div>
       </td>
     </tr>`;
   }).join('');
 
+}
+
+function syncProductionDateFilter() {
+  const dateFilterEl = document.getElementById('productionDateFilter');
+  const planDateEl = document.getElementById('planDate');
+  if (!dateFilterEl) return;
+  if (!dateFilterEl.value) dateFilterEl.value = getTodayStr();
+  if (planDateEl) planDateEl.value = dateFilterEl.value;
+  renderProductionPage();
+}
+
+function syncProductionPlanDate() {
+  const dateFilterEl = document.getElementById('productionDateFilter');
+  const planDateEl = document.getElementById('planDate');
+  if (!planDateEl) return;
+  if (!planDateEl.value) planDateEl.value = getTodayStr();
+  if (dateFilterEl) dateFilterEl.value = planDateEl.value;
+  renderProductionPage();
+}
+
+function openProductionPlanEdit(planId) {
+  const order = db.orders.find(o => o.id === planId);
+  if (!order) { showToast('生产计划不存在', 'error'); return; }
+  if (order.status !== 'scheduled') { showToast('仅待开工计划可以修改', 'warning'); return; }
+  const customer = order ? db.customers.find(c => c.id === order.customerId) : null;
+  document.getElementById('productionPlanEditId').value = order.id;
+  document.getElementById('productionPlanEditDate').value = getPlanDateKey(order);
+  document.getElementById('productionPlanEditRemark').value = order.planRemark || '';
+  document.getElementById('productionPlanEditOrder').value = order ? `${order.id} · ${customer ? customer.name : '-'} · ${order.qty}kg` : '';
+  openModal('productionPlanEditModal');
+}
+
+function closeProductionPlanEditModal() {
+  closeModal('productionPlanEditModal');
+}
+
+function saveProductionPlanEdit() {
+  const planId = document.getElementById('productionPlanEditId').value;
+  const planDate = document.getElementById('productionPlanEditDate').value;
+  const remark = document.getElementById('productionPlanEditRemark').value.trim();
+  const order = db.orders.find(o => o.id === planId);
+  if (!order) { showToast('生产计划不存在', 'error'); return; }
+  if (order.status !== 'scheduled') { showToast('仅待开工计划可以修改', 'warning'); return; }
+  if (!planDate) { showToast('请选择计划日期', 'warning'); return; }
+
+  order.scheduledAt = `${planDate} 09:30`;
+  order.planRemark = remark;
+
+  saveDB(db);
+  closeProductionPlanEditModal();
+  showToast('生产计划已更新');
+  renderProductionPage();
+}
+
+function deleteProductionPlan(planId) {
+  const order = db.orders.find(o => o.id === planId);
+  if (!order) { showToast('生产计划不存在', 'error'); return; }
+  if (order.status !== 'scheduled') {
+    showToast('仅待开工计划可以删除', 'warning');
+    return;
+  }
+  if (!confirm(`确定删除这条生产计划吗？\n${getPlanDateKey(order)} · ${order.id}`)) return;
+
+  order.status = 'pending';
+  delete order.scheduledAt;
+  delete order.planRemark;
+
+  saveDB(db);
+  showToast('生产计划已删除');
+  renderProductionPage();
 }
 
 function renderTicketPage() {
@@ -267,7 +354,6 @@ function downloadProductionTicketImage() {
 }
 
 function addProductionPlan() {
-  ensureProductionState();
   const planDate = document.getElementById('planDate').value;
   const orderId = document.getElementById('planOrderId').value;
   const remark = document.getElementById('planRemark').value.trim();
@@ -275,20 +361,10 @@ function addProductionPlan() {
 
   const order = db.orders.find(o => o.id === orderId);
   if (!order) { showToast('订单不存在', 'error'); return; }
-
-  const exists = db.productionPlans.find(p => p.planDate === planDate && p.orderId === orderId && p.status !== 'cancelled');
-  if (exists) { showToast('该订单当天已在生产计划中', 'warning'); return; }
-
-  db.productionPlans.push({
-    id: genId('PP'),
-    planDate,
-    orderId: order.id,
-    formulaId: order.formulaId,
-    qty: order.qty,
-    status: order.status === 'producing' ? 'in_progress' : 'planned',
-    remark,
-    createdAt: getTodayStr(),
-  });
+  if (order.status !== 'pending') { showToast('仅待处理订单可以加入生产计划', 'warning'); return; }
+  order.status = 'scheduled';
+  order.scheduledAt = order.scheduledAt || `${planDate} 09:30`;
+  order.planRemark = remark;
 
   saveDB(db);
   showToast('已加入生产计划');
@@ -296,37 +372,33 @@ function addProductionPlan() {
 }
 
 function startProductionPlan(planId) {
-  const plan = db.productionPlans.find(p => p.id === planId);
-  if (!plan || plan.status !== 'planned') return;
-  const order = db.orders.find(o => o.id === plan.orderId);
+  const order = db.orders.find(o => o.id === planId);
   if (!order) { showToast('关联订单不存在', 'error'); return; }
-  if (order.status !== 'pending') { showToast('订单状态不是待生产，无法开工', 'warning'); return; }
+  if (!['pending', 'scheduled'].includes(order.status)) { showToast('订单状态不是待处理或已安排，无法开工', 'warning'); return; }
   const issues = checkStockForProductionOrder(order);
   if (issues.length) { showToast(issues[0], 'error'); return; }
 
   const formula = getFormulaById(order.formulaId);
   if (!formula) { showToast('订单配方不存在', 'error'); return; }
+  if (order.status === 'pending') {
+    order.status = 'scheduled';
+    order.scheduledAt = order.scheduledAt || `${getTodayStr()} 09:30`;
+  }
   ensureRawMaterialDeducted(order, formula);
   order.status = 'producing';
-  plan.status = 'in_progress';
-  plan.startedAt = new Date().toISOString();
   saveDB(db);
   showToast(`已开工并扣减原料：${order.id}`);
   renderProductionPage();
 }
 
 function completeProductionPlan(planId) {
-  const plan = db.productionPlans.find(p => p.id === planId);
-  if (!plan || plan.status !== 'in_progress') return;
-  const order = db.orders.find(o => o.id === plan.orderId);
+  const order = db.orders.find(o => o.id === planId);
   if (!order) { showToast('关联订单不存在', 'error'); return; }
   if (order.status !== 'producing') { showToast('订单不在生产中，无法完工', 'warning'); return; }
   const formula = getFormulaById(order.formulaId);
   if (!formula) { showToast('订单配方不存在', 'error'); return; }
   upsertFinishedGoodsFromOrder(order, formula);
   order.status = 'completed';
-  plan.status = 'completed';
-  plan.completedAt = new Date().toISOString();
   saveDB(db);
   showToast(`已完工入销售库存：${order.id}`);
   renderProductionPage();

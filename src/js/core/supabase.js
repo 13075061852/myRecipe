@@ -14,7 +14,6 @@ const DEFAULT_DATASOURCE_CONFIG = Object.freeze({
       materials: 'materials',
       formulas: 'formulas',
       orders: 'orders',
-      productionPlans: 'production_plans',
       suppliers: 'suppliers',
       customers: 'customers',
       users: 'users',
@@ -73,7 +72,6 @@ function getMigrationCounts(dbSnapshot, usersSnapshot) {
     materials: (d.materials || []).length,
     formulas: (d.formulas || []).length,
     orders: (d.orders || []).length,
-    productionPlans: (d.productionPlans || []).length,
     suppliers: (d.suppliers || []).length,
     customers: (d.customers || []).length,
     users: (u || []).length,
@@ -85,7 +83,7 @@ function buildMigrationPlan(config, dbSnapshot, usersSnapshot) {
   const counts = getMigrationCounts(dbSnapshot, usersSnapshot);
   const operations = [
     '1. 在 Supabase SQL 编辑器中创建表结构和唯一索引（id/username）。',
-    '2. 使用导出的 migration bundle 逐表 upsert 数据（先主数据，再配方与库存，最后订单与生产计划）。',
+    '2. 使用导出的 migration bundle 逐表 upsert 数据（先主数据，再配方与库存，最后订单业务数据）。',
     '3. 校验记录条数和关键汇总字段。',
     '4. 将数据源模式由 local 切换为 supabase（应用层开关已预留）。',
   ];
@@ -215,19 +213,6 @@ function buildSupabaseSqlTemplate(config) {
     '  "createdAt" text',
     ');',
     '',
-    `create table if not exists ${t.productionPlans} (`,
-    '  id text primary key,',
-    '  "planDate" text,',
-    '  "orderId" text,',
-    '  "formulaId" text,',
-    '  qty numeric not null default 0,',
-    '  status text,',
-    '  remark text,',
-    '  "startedAt" text,',
-    '  "completedAt" text,',
-    '  "createdAt" text',
-    ');',
-    '',
     `create table if not exists ${t.suppliers} (id text primary key, payload jsonb not null);`,
     `create table if not exists ${t.customers} (id text primary key, payload jsonb not null);`,
     `create table if not exists ${t.users} (username text primary key, payload jsonb not null);`,
@@ -236,8 +221,6 @@ function buildSupabaseSqlTemplate(config) {
     `create index if not exists idx_${t.orders}_status on ${t.orders}(status);`,
     `create index if not exists idx_${t.materials}_category on ${t.materials}(category);`,
     `create index if not exists idx_${t.orders}_formula on ${t.orders}("formulaId");`,
-    `create index if not exists idx_${t.productionPlans}_status on ${t.productionPlans}(status);`,
-    `create index if not exists idx_${t.productionPlans}_order on ${t.productionPlans}("orderId");`,
     '',
   ].join('\n');
 }
